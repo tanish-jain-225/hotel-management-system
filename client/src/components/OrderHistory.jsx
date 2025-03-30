@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const API_URL = `http://localhost:5000`;
+const API_URL = import.meta.env.VITE_API_URL; // API URL from environment variables
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
