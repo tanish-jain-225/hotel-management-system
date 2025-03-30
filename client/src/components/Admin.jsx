@@ -96,13 +96,23 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Lowercase all string values
+    const lowercasedData = Object.fromEntries(
+      Object.entries(menuData).map(([key, value]) =>
+        typeof value === "string"
+          ? [key, value.trim().toLowerCase()]
+          : [key, value]
+      )
+    );
+
+    // Validation
     if (
-      !menuData.name ||
-      !menuData.cuisine ||
-      !menuData.section ||
-      !menuData.image ||
-      isNaN(menuData.price) ||
-      menuData.price <= 0
+      !lowercasedData.name ||
+      !lowercasedData.cuisine ||
+      !lowercasedData.section ||
+      !lowercasedData.image ||
+      isNaN(lowercasedData.price) ||
+      lowercasedData.price <= 0
     ) {
       addFlashMessage(
         "All fields are required, and price must be valid.",
@@ -116,18 +126,28 @@ const Admin = () => {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(menuData),
+        body: JSON.stringify(lowercasedData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add item");
+        let errorMessage = "Failed to add item";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // Handle non-JSON errors
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       addFlashMessage("Menu item added successfully!");
-      setMenuItems((prev) => [...prev, data.newItem]);
-      setFilteredItems((prev) => [...prev, data.newItem]); // Update filtered items
+      const newItem = data.newItem;
+
+      setMenuItems((prev) => [...prev, newItem]);
+      if (selectedSection === "All" || selectedSection === newItem.section) {
+        setFilteredItems((prev) => [...prev, newItem]);
+      }
       resetMenuData();
     } catch (error) {
       console.error("Error:", error);
