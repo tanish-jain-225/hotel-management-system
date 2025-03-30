@@ -89,7 +89,6 @@ const OrderHistory = () => {
         }
       );
 
-      console.log(response);
 
       if (!response.ok) {
         throw new Error("Failed to clear order history on the server.");
