@@ -157,15 +157,14 @@ const ChangeCredentials = () => {
         </form>
 
         {/* Back Button */}
-        <div className="mt-6 text-center">
-          <div
+        <div className="mt-6 text-center text-gray-500">
+          <a
             className="text-blue-500 cursor-pointer hover:underline"
-            onClick={() => {
-              window.location.href = "/login";
-            }}
+            href="/login"
           >
             Back to Login
-          </div>
+          </a>
+          <p className="my-2">Need help? Contact support</p>
         </div>
       </div>
     </div>

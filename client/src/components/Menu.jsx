@@ -250,6 +250,13 @@ const Menu = () => {
           ))}
         </div>
       )}
+
+      {/* No Items Found Message */}
+      {!loading && !error && filteredItems.length === 0 && (
+        <p className="text-center text-lg text-gray-600">
+          No items available for the selected section or search term.
+        </p>
+      )}
     </div>
   );
 };
