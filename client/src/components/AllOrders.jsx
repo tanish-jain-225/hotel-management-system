@@ -11,11 +11,6 @@ const AllOrders = () => {
   const handleOrderDone = async (order) => {
     try {
   
-      if (!order || !order._id || !order.customer || !order.items) {
-        setError("Invalid order data. Please try again.");
-        return;
-      }
-  
       // Step 1: Post to order-history endpoint
       const postResponse = await fetch(`${API_URL}/order-history`, {
         method: "POST",
