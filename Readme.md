@@ -66,4 +66,4 @@ The **Hotel Menu Order App** is a full-stack web application designed to streaml
 7. Run Command 'npm i'
 8. Run Command 'npm audit fix --force' In case there are Warnings (Optional)
 9. Run Command 'npm run dev'
-10. Go to localhost:5000 in browser and use app
+10. Go to localhost:5173 in browser and use app
