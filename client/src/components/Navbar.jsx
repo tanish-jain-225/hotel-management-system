@@ -33,7 +33,7 @@ const Navbar = () => {
           onClick={() => navigate("/")}
         >
           <img src="/8575289.png" alt="Logo" className="w-10 h-10" />
-          <span>HotelMenu</span>
+          <span>DineEase</span>
         </div>
 
         {/* Mobile Menu Button */}

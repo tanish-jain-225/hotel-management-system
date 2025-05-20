@@ -1,6 +1,6 @@
-# Hotel Menu Order App
+# DineEase - Hotel Menu Order App
 
-The **Hotel Menu Order App** is a full-stack web application designed to streamline the process of managing a hotel's menu, customer orders, and admin functionalities. It provides a seamless experience for customers to browse the menu, add items to their cart, and place orders, while also offering robust admin features for managing orders, menu items, and credentials.
+The **DineEase - Hotel Menu Order App** is a full-stack web application designed to streamline the process of managing a hotel's menu, customer orders, and admin functionalities. It provides a seamless experience for customers to browse the menu, add items to their cart, and place orders, while also offering robust admin features for managing orders, menu items, and credentials.
 
 ---
 

@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto flex flex-col items-center text-center">
         {/* Website Name & Year */}
         <p className="text-lg font-semibold">
-          <span className="text-blue-400">HotelMenu</span> &copy;{" "}
+          <span className="text-blue-400">DineEase</span> &copy;{" "}
           {new Date().getFullYear()}
         </p>
         <p className="text-gray-100 capitalize">
