@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -6,55 +7,43 @@ const AllOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const navigate = useNavigate();
 
-  // Handle Order Done
   const handleOrderDone = async (order) => {
+    if (!window.confirm("Are you sure you want to complete this order?")) return;
+
     try {
-  
-      // Step 1: Post to order-history endpoint
-      const postResponse = await fetch(`${API_URL}/order-history`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(order),
+      const deleteResponse = await fetch(`${API_URL}/place-order/${order._id}`, {
+        method: "DELETE",
       });
-  
-      if (!postResponse.ok) {
-        const errorData = await postResponse.json();
-        throw new Error(errorData.message || "Failed to save order to history");
-      }
-  
-      // Step 2: Delete the order from place-order
-      const deleteResponse = await fetch(
-        `${API_URL}/place-order/${order._id}`,
-        {
-          method: "DELETE",
-        }
-      );
-  
       if (!deleteResponse.ok) {
         const errorData = await deleteResponse.json();
-        throw new Error(
-          errorData.message || "Failed to delete order from active orders"
-        );
+        throw new Error(errorData.message || "Failed to delete order");
       }
-  
-      // Update UI: Remove order from list
-      setOrders((prevOrders) => prevOrders.filter((o) => o._id !== order._id));
-  
+
+      // Step: Update UI
+      setOrders((prev) => prev.filter((o) => o._id !== order._id));
+      setSuccessMsg("Order marked as completed!");
+      setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
       console.error(err.message);
       setError(err.message);
+      setTimeout(() => setError(""), 3000);
     }
   };
 
-  // Fetch Orders from API
   const fetchOrders = async () => {
     try {
-      const response = await fetch(`${API_URL}/place-order`); // No sessionId in the query
+      const response = await fetch(`${API_URL}/place-order`);
       if (!response.ok) throw new Error("Failed to fetch orders");
-  
+
       const data = await response.json();
-      setOrders(data); // Set all orders in state
+      // Sort orders by orderDate descending (most recent first)
+      const sortedOrders = data.sort(
+        (a, b) => new Date(b.orderDate) - new Date(a.orderDate)
+      );
+      setOrders(sortedOrders);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -67,34 +56,42 @@ const AllOrders = () => {
   }, []);
 
   if (loading) return <p className="text-center p-4">Loading orders...</p>;
-  if (error) return <p className="text-center p-4 text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 my-30 md:my-10">
-      {/* Back Button */}
-      <button
-        className="bg-red-600 cursor-pointer rounded-md py-2 px-4 my-1 inline-block text-white font-bold"
-        onClick={() => {
-          window.location.href = "/admin";
-        }}
-      >
-        Back
-      </button>
-      <hr />
-      <h1 className="text-2xl font-bold mb-2">All Orders </h1>
+    <div className="max-w-4xl mx-auto my-12 p-6 md:p-10 bg-white rounded-lg shadow-lg">
+      {/* Navigation Buttons */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
+        <button
+          className="bg-red-600 rounded-md py-2 px-6 text-white font-bold"
+          onClick={() => navigate("/admin")}
+        >
+          Back
+        </button>
+      </div>
+      <hr className="mb-8" />
+
+      {/* Messages */}
+      {successMsg && (
+        <p className="text-green-600 text-center font-semibold mb-4">
+          {successMsg}
+        </p>
+      )}
+      {error && (
+        <p className="text-red-600 text-center font-semibold mb-4">{error}</p>
+      )}
 
       {orders.length === 0 ? (
-        <p className="text-center text-gray-500 text-lg">
+        <p className="text-center text-gray-500 text-lg my-8">
           No orders available.
         </p>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {orders.map((order, index) => (
             <div
               key={index}
-              className="flex flex-col md:flex-row justify-between p-6 border border-gray-300 rounded-lg shadow-md bg-white gap-4 align-center"
+              className="flex flex-col md:flex-row justify-between p-6 border border-gray-300 rounded-lg shadow-md bg-white gap-6 mb-4"
             >
-              {/* Left Section - Order Info */}
+              {/* Customer Info */}
               <div className="flex flex-col gap-3 w-full md:w-1/3">
                 <p className="text-gray-500 text-sm">
                   <span className="font-semibold text-black">Serial No:</span>{" "}
@@ -114,7 +111,7 @@ const AllOrders = () => {
                 </p>
               </div>
 
-              {/* Middle Section - Order Items */}
+              {/* Order Items */}
               <div className="flex flex-col gap-2 mt-4 md:mt-0 w-full md:w-1/3">
                 <p className="text-sm font-semibold">Order Items:</p>
                 <ul className="list-disc list-inside text-gray-700">
@@ -126,7 +123,7 @@ const AllOrders = () => {
                 </ul>
               </div>
 
-              {/* Right Section - Payment and Date */}
+              {/* Total and Date */}
               <div className="flex flex-col gap-3 mt-4 md:mt-0 w-full md:w-1/3 text-left md:text-right">
                 <p className="text-gray-500 text-sm">
                   <span className="font-semibold text-black">Order Date:</span>{" "}
@@ -141,7 +138,7 @@ const AllOrders = () => {
               {/* Done Button */}
               <div className="mt-4 md:mt-0 flex justify-center md:justify-end">
                 <button
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md w-full max-h-[40px] cursor-pointer"
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-md w-full max-h-[40px]"
                   onClick={() => handleOrderDone(order)}
                 >
                   Done

@@ -13,7 +13,6 @@ const Cart = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [flashMessage, setFlashMessage] = useState("");
   const [flashType, setFlashType] = useState("");
-  const [currentOrders, setCurrentOrders] = useState([]); // State to store all current orders
 
   const API_URL = import.meta.env.VITE_API_URL;
   const GST_RATE = 0.05; // 5% GST
@@ -32,20 +31,6 @@ const Cart = () => {
 
   const sessionId = getSessionId();
 
-  // Fetch Current Orders from the database for the current session
-  const fetchCurrentOrders = async () => {
-    try {
-      const response = await fetch(
-        `${API_URL}/place-order?sessionId=${sessionId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch orders");
-      const data = await response.json();
-      setCurrentOrders(data);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    }
-  };
-
   // Fetch Orders (Cart) from Backend for the current session
   const fetchCartItems = async () => {
     try {
@@ -62,19 +47,9 @@ const Cart = () => {
 
   // Fetch current orders on component mount
   useEffect(() => {
-    fetchCurrentOrders();
-  }, []);
-
-  useEffect(() => {
     fetchCartItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Fetch current orders when orderSuccess becomes true
-  useEffect(() => {
-    if (orderSuccess) {
-      fetchCurrentOrders();
-    }
-  }, [orderSuccess]);
 
   // Handle Removing an Order (Cart Item)
   const handleRemoveFromCart = async (itemId) => {
@@ -214,12 +189,6 @@ const Cart = () => {
         >
           Back
         </button>
-        <button
-          className="bg-blue-500 px-4 py-2 rounded-lg text-white cursor-pointer mb-4 ml-4"
-          onClick={() => (window.location.href = "/order-history")}
-        >
-          Order History
-        </button>
       </div>
       <hr />
       <div className="text-3xl font-bold mb-6">Your Cart ({totalItems})</div>
@@ -331,66 +300,6 @@ const Cart = () => {
           )}
         </form>
       )}
-
-      {/* Display Current Orders */}
-      <div>
-        <h2 className="text-3xl font-bold my-6">Your Current Orders</h2>
-        {currentOrders && currentOrders.length > 0 ? (
-          currentOrders.map((order, index) => (
-            <div
-              key={index}
-              className="p-6 bg-gray-100 rounded-lg shadow-md mb-4"
-            >
-              <h3 className="text-2xl font-bold text-blue-600 mb-4">
-                Order #{index + 1}
-              </h3>
-              {/* Customer Details */}
-              <div className="mb-4">
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="font-bold">Name:</span> {order.customer.name}
-                </p>
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="font-bold">Contact:</span>{" "}
-                  {order.customer.contact}
-                </p>
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="font-bold">Address:</span>{" "}
-                  {order.customer.address}
-                </p>
-              </div>
-              {/* Items Ordered */}
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-gray-700 mb-2">
-                  Items Ordered:
-                </h3>
-                <ul className="list-disc list-inside text-gray-700">
-                  {order.items.map((item, itemIndex) => (
-                    <li key={itemIndex} className="mb-1">
-                      {item.name} - <span className="font-semibold">Qty:</span>{" "}
-                      {item.quantity}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {/* Order Totals */}
-              <div className="border-t border-gray-300 pt-4">
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="font-bold">Subtotal:</span> ₹{order.subtotal}
-                </p>
-                <p className="text-lg font-semibold text-gray-800">
-                  <span className="font-bold">GST:</span> ₹{order.gstAmount}
-                </p>
-                <p className="text-xl font-bold text-blue-600">
-                  <span className="font-bold">Grand Total:</span> ₹
-                  {order.grandTotal}
-                </p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500">No current orders available.</p>
-        )}
-      </div>
     </div>
   );
 };

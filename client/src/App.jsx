@@ -10,7 +10,6 @@ import Admin from "./components/Admin";
 import Cart from "./components/Cart";
 import AllOrders from "./components/AllOrders";
 import ChangeCredentials from "./components/ChangeCredentials";
-import OrderHistory from "./components/OrderHistory";
 
 // Import Global Styles
 import "./App.css";
@@ -34,7 +33,6 @@ const App = () => {
             <Route path="/admin" element={<Admin />} /> {/* Admin Panel */}
             <Route path="/AllOrders" element={<AllOrders />} /> {/* All Orders Page */}
             <Route path="/login-change" element={<ChangeCredentials />} /> {/* Change Credentials Page */}
-            <Route path="/order-history" element={<OrderHistory />} /> {/* Order History Page */}
           </Routes>
         </div>
 

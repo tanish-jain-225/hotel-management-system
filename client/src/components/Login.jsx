@@ -45,7 +45,7 @@ const Login = () => {
         const data = await response.json();
         setAdminUsername(String(data.username));
         setAdminPassword(String(data.password));
-      } catch (error) {
+      } catch {
         showFlashMessage(
           "Error fetching credentials. Please try again later.",
           "error"
@@ -54,6 +54,7 @@ const Login = () => {
     }
 
     fetchAdminCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Show flash message

@@ -224,8 +224,8 @@ const Admin = () => {
   ];
 
   return (
-    <div className="max-w-6xl p-6 mx-auto my-30 md:my-10 flex flex-col gap-8">
-      <h2 className="text-4xl font-bold text-center text-blue-600 mb-8">
+    <div className="max-w-6xl mx-auto my-12 p-6 md:p-10 flex flex-col gap-10">
+      <h2 className="text-4xl font-bold text-center text-blue-600 mb-10">
         Admin Panel
       </h2>
 
@@ -242,7 +242,7 @@ const Admin = () => {
       {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 border p-4 rounded-lg shadow-md"
+        className="flex flex-col gap-6 border p-6 md:p-8 rounded-lg shadow-md mb-10"
       >
         {["name", "cuisine", "section", "price", "image"].map((field) => (
           <input
@@ -277,8 +277,7 @@ const Admin = () => {
       </form>
 
       {/* Search & Filter */}
-      {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full mb-10">
         <input
           type="text"
           placeholder="Search For Food"
@@ -312,7 +311,7 @@ const Admin = () => {
       </div>
 
       {/* Display Menu Items by Section */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-10">
         {filteredItems.length > 0 ? (
           Object.keys(
             filteredItems.reduce((acc, item) => {
@@ -322,25 +321,25 @@ const Admin = () => {
               return acc;
             }, {})
           ).map((section) => (
-            <div key={section} className="flex flex-col gap-4">
-              <h3 className="text-2xl font-bold text-gray-800 capitalize">
+            <div key={section} className="flex flex-col gap-6 mb-8">
+              <h3 className="text-2xl font-bold text-gray-800 capitalize mb-2">
                 {section}
               </h3>
-              <hr />
-              <div className="flex flex-wrap gap-4 capitalize">
+              <hr className="mb-4" />
+              <div className="flex flex-wrap gap-6 capitalize">
                 {filteredItems
                   .filter((item) => item.section === section)
                   .map((item) => (
                     <div
                       key={item._id}
-                      className="flex flex-col border border-gray-300 rounded-lg shadow-md w-full md:w-[30%] overflow-hidden"
+                      className="flex flex-col border border-gray-300 rounded-lg shadow-md w-full md:w-[30%] overflow-hidden mb-4"
                     >
                       <img
                         src={item.image || "https://via.placeholder.com/300"}
                         alt={item.name}
                         className="object-cover w-full h-48"
                       />
-                      <div className="flex flex-col p-4 gap-2">
+                      <div className="flex flex-col p-4 gap-3">
                         <h4 className="text-xl font-bold text-gray-800">
                           {item.name}
                         </h4>

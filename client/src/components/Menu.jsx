@@ -97,6 +97,7 @@ const Menu = () => {
     };
     fetchMenu();
     fetchCartCount(); // Fetch cart count when the component mounts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Extract unique sections
