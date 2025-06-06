@@ -11,13 +11,12 @@ The **DineEase - Hotel Menu Order App** is a full-stack web application designed
 - **Menu Browsing**: View a categorized menu with details like cuisine, price, and description.
 - **Cart Management**: Add, update, or remove items from the cart.
 - **Order Placement**: Place orders with real-time GST and grand total calculations.
-- **Order History**: View past orders based on session ID.
 
 ### **Admin Features**
 
 - **Admin Login**: Secure login for admin users.
 - **Menu Management**: Add, update, or delete menu items.
-- **Order Management**: View all orders, mark orders as completed, and manage order history.
+- **Order Management**: View all orders, mark orders as completed. 
 - **Credential Management**: Update admin credentials securely.
 
 ### **Real-Time Updates**
