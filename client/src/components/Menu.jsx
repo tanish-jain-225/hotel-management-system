@@ -175,7 +175,7 @@ const Menu = () => {
 
           {/* Cart Button with Dynamic Badge */}
           <div
-            className="cart py-2 px-6 bg-green-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-[100%] align-center"
+            className="cart py-2 px-6 bg-blue-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-[100%] align-center"
             onClick={() => (window.location.href = "/cart")}
           >
             <span className="md:hidden font-bold">Cart</span>
