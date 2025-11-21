@@ -22,7 +22,7 @@ const App = () => {
         <Navbar />
 
         {/* Main Content Area */}
-        <div className="flex-grow pt-16">
+        <div className="grow pt-16">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Menu />} /> {/* Menu Page */}

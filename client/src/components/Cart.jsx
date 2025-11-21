@@ -208,7 +208,7 @@ const Cart = () => {
           {groupedOrders.map((item) => (
             <div
               key={item._id}
-              className="flex w-[100%] md:w-[45%] lg:w-[30%] border border-gray-200 rounded-lg shadow-md overflow-hidden md:flex-row flex-col bg-white"
+              className="flex w-full md:w-[45%] lg:w-[30%] border border-gray-200 rounded-lg shadow-md overflow-hidden md:flex-row flex-col bg-white"
             >
               {/* Image Section */}
               <div className="w-full md:w-1/3 h-48 md:h-auto">
@@ -220,7 +220,7 @@ const Cart = () => {
               </div>
 
               {/* Details Section */}
-              <div className="p-4 flex flex-col justify-between flex-grow">
+              <div className="p-4 flex flex-col justify-between grow">
                 <h4 className="text-xl font-bold text-gray-900">{item.name}</h4>
                 <p className="text-gray-700">
                   Cuisine: <span className="font-semibold">{item.cuisine}</span>
