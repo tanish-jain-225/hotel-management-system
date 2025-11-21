@@ -20,6 +20,13 @@ app.use(express.json());
 let client;
 let db;
 
+// ===============================
+// Health Check Endpoint
+// ===============================
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "Server is healthy" });
+});
+
 // ==============================
 // Database Connection
 // ==============================

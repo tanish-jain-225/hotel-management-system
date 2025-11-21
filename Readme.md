@@ -170,7 +170,7 @@ copy .env.example .env    # Windows
 cp .env.example .env      # macOS/Linux
 
 # Edit .env file and add your MongoDB connection string
-# MONGO_URI="mongodb+srv://username:password@cluster.mongodb.net/hotelMenu?retryWrites=true&w=majority"
+# MONGO_URI="your-mongo-string"
 ```
 
 **MongoDB Setup:**
@@ -497,7 +497,7 @@ vercel --prod
 
 **Backend (.env)**
 ```bash
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/hotelMenu
+MONGO_URI=your-mongo-string
 ```
 
 **Frontend (.env)**
