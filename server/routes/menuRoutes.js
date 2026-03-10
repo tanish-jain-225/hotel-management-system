@@ -7,7 +7,7 @@ const router = Router();
 // GET /menu — Fetch all menu items
 router.get("/", async (req, res, next) => {
   try {
-    const items = await getCollection("menuItems").find().toArray();
+    const items = await (await getCollection("menuItems")).find().toArray();
     res.json(items);
   } catch (error) {
     next(error);
@@ -24,7 +24,7 @@ router.post("/", async (req, res, next) => {
     }
 
     const newItem = { name, cuisine, section, price, image, info };
-    await getCollection("menuItems").insertOne(newItem);
+    await (await getCollection("menuItems")).insertOne(newItem);
     res.status(201).json({ message: "Menu item added successfully", newItem });
   } catch (error) {
     next(error);
@@ -37,7 +37,7 @@ router.post("/check", async (req, res, next) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ message: "Dish name is required" });
 
-    const existing = await getCollection("menuItems").findOne({ name: name.trim() });
+    const existing = await (await getCollection("menuItems")).findOne({ name: name.trim() });
     res.json({ exists: !!existing });
   } catch (error) {
     next(error);
@@ -53,7 +53,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Invalid menu item ID" });
     }
 
-    const result = await getCollection("menuItems").deleteOne({ _id: new ObjectId(id) });
+    const result = await (await getCollection("menuItems")).deleteOne({ _id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Menu item not found" });

@@ -12,7 +12,7 @@ router.post("/login", async (req, res, next) => {
       return res.status(400).json({ message: "Username and password are required" });
     }
 
-    const admin = await getCollection("adminCredentials").findOne();
+    const admin = await (await getCollection("adminCredentials")).findOne();
 
     if (!admin) {
       return res.status(404).json({ message: "Admin credentials not configured" });
@@ -37,7 +37,8 @@ router.put("/credentials", async (req, res, next) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const admin = await getCollection("adminCredentials").findOne();
+    const credentialsCol = await getCollection("adminCredentials");
+    const admin = await credentialsCol.findOne();
 
     if (!admin) {
       return res.status(404).json({ message: "Admin credentials not configured" });
@@ -47,7 +48,7 @@ router.put("/credentials", async (req, res, next) => {
       return res.status(401).json({ message: "Previous credentials are incorrect" });
     }
 
-    await getCollection("adminCredentials").updateOne(
+    await credentialsCol.updateOne(
       {},
       { $set: { username: newUsername, password: newPassword } },
       { upsert: true }

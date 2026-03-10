@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import { connectToDatabase, closeConnection } from "./config/database.js";
+import { closeConnection } from "./config/database.js";
 import menuRoutes from "./routes/menuRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -33,10 +33,9 @@ app.use("/admin", adminRoutes);
 // Global Error Handler
 app.use(errorHandler);
 
-// Start Server
-connectToDatabase().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
+// Start Server (local dev — on Vercel the exported app is used directly)
+const port = PORT || 5000;
+app.listen(port, () => console.log(`Server running on port ${port}`));
 
 // Graceful Shutdown
 process.on("SIGINT", async () => {

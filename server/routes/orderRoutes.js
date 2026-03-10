@@ -17,7 +17,8 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "Invalid price values" });
     }
 
-    const orderCount = await getCollection("customerOrders").countDocuments();
+    const customerOrders = await getCollection("customerOrders");
+    const orderCount = await customerOrders.countDocuments();
     const serialNumber = orderCount + 1;
 
     const orderData = {
@@ -32,7 +33,7 @@ router.post("/", async (req, res, next) => {
       orderDate: new Date(),
     };
 
-    const result = await getCollection("customerOrders").insertOne(orderData);
+    const result = await customerOrders.insertOne(orderData);
     if (!result.acknowledged) throw new Error("Failed to place order");
 
     res.status(201).json({ message: "Order placed successfully", orderId: result.insertedId, serialNumber });
@@ -46,7 +47,7 @@ router.get("/", async (req, res, next) => {
   try {
     const { sessionId } = req.query;
     const query = sessionId ? { sessionId } : {};
-    const orders = await getCollection("customerOrders").find(query).toArray();
+    const orders = await (await getCollection("customerOrders")).find(query).toArray();
     res.json(orders);
   } catch (error) {
     next(error);
@@ -62,7 +63,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Invalid order ID" });
     }
 
-    const result = await getCollection("customerOrders").deleteOne({ _id: new ObjectId(id) });
+    const result = await (await getCollection("customerOrders")).deleteOne({ _id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Order not found" });

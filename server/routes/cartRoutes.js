@@ -14,7 +14,7 @@ router.post("/", async (req, res, next) => {
     }
 
     const cartItem = { sessionId, name, price, quantity, image, cuisine, section };
-    const result = await getCollection("orders").insertOne(cartItem);
+    const result = await (await getCollection("orders")).insertOne(cartItem);
 
     if (!result.acknowledged) {
       throw new Error("Failed to add item to cart");
@@ -32,7 +32,7 @@ router.get("/", async (req, res, next) => {
     const { sessionId } = req.query;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    const items = await getCollection("orders").find({ sessionId }).toArray();
+    const items = await (await getCollection("orders")).find({ sessionId }).toArray();
     res.json(items);
   } catch (error) {
     next(error);
@@ -45,7 +45,7 @@ router.delete("/clear", async (req, res, next) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    await getCollection("orders").deleteMany({ sessionId });
+    await (await getCollection("orders")).deleteMany({ sessionId });
     res.json({ message: "Cart cleared successfully" });
   } catch (error) {
     next(error);
@@ -62,7 +62,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Valid session ID and item ID are required" });
     }
 
-    const result = await getCollection("orders").deleteOne({
+    const result = await (await getCollection("orders")).deleteOne({
       _id: new ObjectId(id),
       sessionId,
     });
