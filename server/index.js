@@ -20,7 +20,7 @@ app.use(helmet());
 app.use(express.json());
 
 // Health Check
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
   res.json({ status: "Server is healthy" });
 });
 
