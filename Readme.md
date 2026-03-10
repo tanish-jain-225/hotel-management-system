@@ -11,7 +11,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Installation](#-installation-and-setup) • [Usage](#-usage) • [API Documentation](#-api-documentation) • [Deployment](#-deployment)
+[Features](#-features) • [Tech Stack](#-tech-stack) • [Architecture](#-architecture) • [Installation](#-installation-and-setup) • [Usage](#-usage) • [API Documentation](#-api-documentation) • [Deployment](#-deployment)
 
 </div>
 
@@ -27,9 +27,10 @@
 - **Real-Time Order Tracking**: Instant updates for both customers and admin
 - **Automated GST Calculation**: Built-in 5% GST calculation on all orders
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices
-- **Secure Admin Panel**: Protected routes with authentication and credential management
+- **Secure Admin Panel**: Server-side authentication with protected routes
 - **Search & Filter**: Advanced menu filtering by section and search functionality
 - **Order Serial Numbers**: Automatic serial numbering for easy order tracking
+- **Modular Architecture**: Clean separation of concerns on both frontend and backend
 
 ---
 
@@ -63,9 +64,8 @@
 ### 🔐 **Admin Features**
 
 - **🔑 Secure Login System**
-  - Username and password authentication
-  - Credentials stored securely in MongoDB
-  - Session-based authentication using localStorage
+  - Server-side credential verification (credentials never sent to client)
+  - Session-based authentication using React Context + localStorage
   - Auto-redirect for unauthorized access
   - Flash messages for login feedback
 
@@ -91,18 +91,9 @@
 
 - **🔧 Credential Management**
   - Change admin username and password securely
-  - Previous credential verification required
+  - Previous credential verification required (server-side)
   - Instant validation and feedback
   - Auto-redirect to login after credential update
-  - Flash messages for success/error states
-
-### 🔄 **Real-Time Features**
-
-- Instantaneous UI updates on all CRUD operations
-- Flash card notifications for user actions
-- Loading states during data fetching
-- Error handling with user-friendly messages
-- Automatic cart count synchronization
 
 ---
 
@@ -124,17 +115,57 @@
 |-----------|---------|---------|
 | **Node.js** | 18+ | JavaScript runtime environment |
 | **Express.js** | 4.21.2 | Web application framework |
-| **MongoDB** | 6.14.2 | NoSQL database for data storage |
+| **MongoDB** | 6.14.2 | NoSQL database driver |
 | **CORS** | 2.8.5 | Cross-Origin Resource Sharing middleware |
 | **dotenv** | 16.4.7 | Environment variable management |
-| **Helmet** | 8.1.0 | Security middleware for Express |
+| **Helmet** | 8.1.0 | Security headers middleware |
 
 ### **Database Collections**
 
-1. **menuItems** - Stores all menu items with details
-2. **orders** - Session-based cart items (temporary)
-3. **customerOrders** - Confirmed customer orders with full details
-4. **adminCredentials** - Admin login credentials (single document)
+| Collection | Purpose |
+|-----------|---------|
+| **menuItems** | Stores all menu items with details |
+| **orders** | Session-based cart items (temporary) |
+| **customerOrders** | Confirmed customer orders with full details |
+| **adminCredentials** | Admin login credentials (single document) |
+
+---
+
+## 🏗️ Architecture
+
+### **Backend — Modular Express**
+
+The backend follows a modular route-based architecture with clear separation of concerns:
+
+- **Entry Point** (`index.js`) — Middleware setup and route mounting
+- **Config** (`config/database.js`) — MongoDB connection management with `connectToDatabase()`, `getCollection()`, and `closeConnection()`
+- **Routes** — Each domain has its own route file mounted at a dedicated path:
+  - `/menu` → `routes/menuRoutes.js`
+  - `/cart` → `routes/cartRoutes.js`
+  - `/orders` → `routes/orderRoutes.js`
+  - `/admin` → `routes/adminRoutes.js`
+- **Middleware** (`middleware/errorHandler.js`) — Global error handler
+
+### **Frontend — Service Layer + Context**
+
+The frontend uses a centralized API service layer and React Context for shared state:
+
+- **Services** (`services/api.js`) — Centralized API layer with `menuApi`, `cartApi`, `orderApi`, `adminApi` objects
+- **Services** (`services/helper.js`) — Environment-aware API URL resolution (dev vs prod)
+- **Context** (`context/AuthContext.jsx`) — `AuthProvider` + `useAuth()` hook for login/logout state
+- **Utils** (`utils/session.js`) — Session ID generation and persistence
+- **Components** — Reusable `FlashMessage` component shared across all views
+
+### **Client-Side Routes**
+
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/` | Menu | Customer menu browsing |
+| `/cart` | Cart | Shopping cart and checkout |
+| `/login` | Login | Admin authentication |
+| `/admin` | Admin | Menu management (protected) |
+| `/all-orders` | AllOrders | Order management (protected) |
+| `/change-credentials` | ChangeCredentials | Update admin login (protected) |
 
 ---
 
@@ -168,9 +199,12 @@ npm install
 copy .env.example .env    # Windows
 # OR
 cp .env.example .env      # macOS/Linux
+```
 
-# Edit .env file and add your MongoDB connection string
-# MONGO_URI="your-mongo-string"
+Edit the `.env` file:
+```bash
+MONGO_URI="your-mongodb-connection-string-here"
+PORT=5000
 ```
 
 **MongoDB Setup:**
@@ -180,8 +214,8 @@ cp .env.example .env      # macOS/Linux
   - `orders`
   - `customerOrders`
   - `adminCredentials`
-- **Important**: Add an initial admin credential document manually:
-  ```javascript
+- **Important**: Add an initial admin credential document in the `adminCredentials` collection:
+  ```json
   {
     "username": "admin",
     "password": "admin123"
@@ -201,28 +235,30 @@ npm install
 copy .env.example .env    # Windows
 # OR
 cp .env.example .env      # macOS/Linux
-
-# Edit .env file and set API URL
-# For local development:
-# VITE_API_URL="http://localhost:5000"
-# For production:
-# VITE_API_URL="https://your-backend-url.vercel.app"
 ```
+
+Edit the `.env` file:
+```bash
+VITE_API_URL_DEV="http://localhost:5000"
+VITE_API_URL_PROD="https://your-deployed-backend.vercel.app"
+```
+
+> The app automatically picks the correct URL based on the environment (`development` or `production`).
 
 #### 4️⃣ Run the Application
 
 **Terminal 1 - Backend:**
 ```bash
 cd server
-node index.js
-# Server will run on http://localhost:5000
+npm run dev
+# Server runs on http://localhost:5000 with file watching
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
 cd client
 npm run dev
-# Client will run on http://localhost:5173
+# Client runs on http://localhost:5173
 ```
 
 #### 5️⃣ Access the Application
@@ -237,47 +273,16 @@ npm run dev
 
 ### **For Customers**
 
-1. **Browse Menu**
-   - Navigate to the home page
-   - Use search bar to find specific dishes
-   - Filter by section using dropdown
-   - Click "Order" to add items to cart
-
-2. **Manage Cart**
-   - Click cart icon in navbar to view cart
-   - Review items, quantities, and prices
-   - Remove unwanted items
-   - See subtotal, GST, and grand total
-
-3. **Place Order**
-   - Fill in customer details (Name, Contact, Address)
-   - Review order summary
-   - Select payment method
-   - Click "Confirm Order"
-   - Cart clears automatically after successful order
+1. **Browse Menu** — Navigate to the home page, use search bar or filter by section, click "Order" to add items to cart
+2. **Manage Cart** — Click cart icon in navbar, review items and prices, remove unwanted items
+3. **Place Order** — Fill in customer details, review order summary with GST, select payment method, click "Confirm Order"
 
 ### **For Admin**
 
-1. **Login**
-   - Navigate to `/login`
-   - Enter admin credentials
-   - Access admin panel
-
-2. **Manage Menu**
-   - **Add Items**: Fill form with item details and submit
-   - **Delete Items**: Click delete button on any menu item
-   - **Search/Filter**: Use search and section filter to find items
-
-3. **View Orders**
-   - Navigate to "All Orders" from admin panel
-   - View order details including customer info
-   - Click "Done" to complete and remove orders
-
-4. **Change Credentials**
-   - Navigate to "Change Credentials"
-   - Enter previous credentials for verification
-   - Set new username and password
-   - Auto-redirected to login after update
+1. **Login** — Navigate to `/login` and enter admin credentials
+2. **Manage Menu** — Add items with details (name, cuisine, section, price, image URL, description) or delete existing items
+3. **View Orders** — Navigate to `/all-orders`, view order details, click "Done" to complete orders
+4. **Change Credentials** — Navigate to `/change-credentials`, verify previous credentials, set new ones
 
 ---
 
@@ -285,32 +290,22 @@ npm run dev
 
 ### **Base URL**
 ```
-Local: http://localhost:5000
+Local:      http://localhost:5000
 Production: https://your-backend.vercel.app
 ```
 
-### **Menu Endpoints**
+### **Menu Endpoints** (`/menu`)
 
-#### Get All Menu Items
-```http
-GET /
-```
-**Response**: Array of menu items
-
-#### Check Menu Item Existence
-```http
-POST /check
-Content-Type: application/json
-
-{
-  "name": "Chicken Biryani"
-}
-```
-**Response**: `{ "exists": true/false }`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/menu` | Get all menu items |
+| `POST` | `/menu` | Add a new menu item |
+| `POST` | `/menu/check` | Check if a menu item name exists |
+| `DELETE` | `/menu/:id` | Delete a menu item by ID |
 
 #### Add Menu Item
 ```http
-POST /
+POST /menu
 Content-Type: application/json
 
 {
@@ -323,21 +318,36 @@ Content-Type: application/json
 }
 ```
 
-#### Delete Menu Item
+#### Check Menu Item Existence
 ```http
-DELETE /
+POST /menu/check
 Content-Type: application/json
 
 {
-  "_id": "60d5ec49f1b2c8b1f8e4e1a1"
+  "name": "Chicken Biryani"
 }
 ```
+**Response**: `{ "exists": true/false }`
 
-### **Cart/Order Endpoints**
+#### Delete Menu Item
+```http
+DELETE /menu/60d5ec49f1b2c8b1f8e4e1a1
+```
+
+---
+
+### **Cart Endpoints** (`/cart`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/cart` | Add item to cart |
+| `GET` | `/cart?sessionId=...` | Get cart items for a session |
+| `DELETE` | `/cart/clear` | Clear all cart items for a session |
+| `DELETE` | `/cart/:id` | Remove a specific cart item |
 
 #### Add Item to Cart
 ```http
-POST /order
+POST /cart
 Content-Type: application/json
 
 {
@@ -351,25 +361,9 @@ Content-Type: application/json
 }
 ```
 
-#### Get Cart Items
-```http
-GET /orders?sessionId=session_1234567890_abc123
-```
-
-#### Remove Item from Cart
-```http
-DELETE /orders
-Content-Type: application/json
-
-{
-  "sessionId": "session_1234567890_abc123",
-  "_id": "60d5ec49f1b2c8b1f8e4e1a2"
-}
-```
-
 #### Clear Cart
 ```http
-DELETE /orders/clear
+DELETE /cart/clear
 Content-Type: application/json
 
 {
@@ -377,11 +371,20 @@ Content-Type: application/json
 }
 ```
 
-### **Customer Order Endpoints**
+---
+
+### **Order Endpoints** (`/orders`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/orders` | Place a new order |
+| `GET` | `/orders` | Get all orders (admin) |
+| `GET` | `/orders?sessionId=...` | Get orders for a session (customer) |
+| `DELETE` | `/orders/:id` | Mark order as completed |
 
 #### Place Order
 ```http
-POST /place-order
+POST /orders
 Content-Type: application/json
 
 {
@@ -404,31 +407,18 @@ Content-Type: application/json
 }
 ```
 
-#### Get All Orders (Admin)
-```http
-GET /place-order
-```
+---
 
-#### Get Orders by Session (Customer)
-```http
-GET /place-order?sessionId=session_1234567890_abc123
-```
+### **Admin Endpoints** (`/admin`)
 
-#### Delete Order (Mark as Done)
-```http
-DELETE /place-order/:orderId
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/admin/login` | Verify admin credentials (server-side) |
+| `PUT` | `/admin/credentials` | Update admin credentials |
 
-### **Admin Endpoints**
-
-#### Get Admin Credentials
+#### Admin Login
 ```http
-GET /admin
-```
-
-#### Verify Admin Credentials
-```http
-POST /admin/verify
+POST /admin/login
 Content-Type: application/json
 
 {
@@ -436,15 +426,19 @@ Content-Type: application/json
   "password": "admin123"
 }
 ```
+**Response (success)**: `{ "message": "Login successful" }`
+**Response (fail)**: `401 { "message": "Invalid username or password" }`
 
 #### Update Admin Credentials
 ```http
-PUT /admin
+PUT /admin/credentials
 Content-Type: application/json
 
 {
-  "username": "newadmin",
-  "password": "newpassword123"
+  "prevUsername": "admin",
+  "prevPassword": "admin123",
+  "newUsername": "newadmin",
+  "newPassword": "newpassword123"
 }
 ```
 
@@ -457,12 +451,12 @@ Content-Type: application/json
 #### Backend Deployment
 
 1. Navigate to server directory
-2. Ensure `vercel.json` is configured:
+2. The `vercel.json` is already configured:
 ```json
 {
   "version": 2,
-  "builds": [{ "src": "*.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "/" }]
+  "builds": [{ "src": "index.js", "use": "@vercel/node" }],
+  "routes": [{ "src": "/(.*)", "dest": "/index.js" }]
 }
 ```
 3. Deploy:
@@ -476,11 +470,11 @@ vercel --prod
 #### Frontend Deployment
 
 1. Navigate to client directory
-2. Update `.env` with production API URL:
+2. Set the production API URL in `.env`:
 ```bash
-VITE_API_URL="https://your-backend.vercel.app"
+VITE_API_URL_PROD="https://your-backend.vercel.app"
 ```
-3. Ensure `vercel.json` is configured:
+3. The `vercel.json` is already configured:
 ```json
 {
   "version": 2,
@@ -495,18 +489,16 @@ vercel --prod
 
 ### **Environment Variables Summary**
 
-**Backend (.env)**
+**Backend (`server/.env`)**
 ```bash
-MONGO_URI=your-mongo-string
+MONGO_URI="your-mongodb-connection-string-here"
+PORT=5000
 ```
 
-**Frontend (.env)**
+**Frontend (`client/.env`)**
 ```bash
-# Local Development
-VITE_API_URL=http://localhost:5000
-
-# Production
-VITE_API_URL=https://your-backend.vercel.app
+VITE_API_URL_DEV="http://localhost:5000"
+VITE_API_URL_PROD="https://your-backend.vercel.app"
 ```
 
 ---
@@ -515,50 +507,64 @@ VITE_API_URL=https://your-backend.vercel.app
 
 ```
 hotel-management-system/
-├── client/                          # Frontend React application
+├── client/                              # Frontend React application
 │   ├── public/
-│   │   └── 8575289.png             # Logo image
+│   │   └── 8575289.png                 # Logo image
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Admin.jsx           # Admin panel component
-│   │   │   ├── AllOrders.jsx       # Order management component
-│   │   │   ├── Cart.jsx            # Shopping cart component
-│   │   │   ├── ChangeCredentials.jsx  # Credential update component
-│   │   │   ├── Footer.jsx          # Footer component
-│   │   │   ├── Login.jsx           # Admin login component
-│   │   │   ├── Menu.jsx            # Menu display component
-│   │   │   └── Navbar.jsx          # Navigation bar component
-│   │   ├── App.jsx                 # Main app component with routes
-│   │   ├── main.jsx                # React entry point
-│   │   ├── App.css                 # Global styles
-│   │   └── index.css               # Tailwind imports
-│   ├── .env                        # Environment variables (gitignored)
-│   ├── .env.example                # Environment variables template
-│   ├── package.json                # Frontend dependencies
-│   ├── vite.config.js              # Vite configuration
-│   ├── tailwind.config.js          # Tailwind CSS configuration
-│   ├── postcss.config.mjs          # PostCSS configuration
-│   └── vercel.json                 # Vercel deployment config
+│   │   │   ├── Admin.jsx               # Admin panel — menu management
+│   │   │   ├── AllOrders.jsx           # Admin — order management
+│   │   │   ├── Cart.jsx               # Shopping cart and checkout
+│   │   │   ├── ChangeCredentials.jsx   # Admin — credential update
+│   │   │   ├── FlashMessage.jsx        # Reusable notification component
+│   │   │   ├── Footer.jsx             # Footer
+│   │   │   ├── Login.jsx              # Admin login
+│   │   │   ├── Menu.jsx               # Customer menu browsing
+│   │   │   └── Navbar.jsx             # Navigation bar with cart count
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx         # Auth state (login/logout/isAuthenticated)
+│   │   ├── services/
+│   │   │   ├── api.js                  # Centralized API layer
+│   │   │   └── helper.js              # Environment-aware API URL
+│   │   ├── utils/
+│   │   │   └── session.js             # Session ID management
+│   │   ├── App.jsx                     # Root component with routes
+│   │   ├── main.jsx                    # React entry point
+│   │   ├── App.css                     # Global styles
+│   │   └── index.css                   # Tailwind imports
+│   ├── .env.example                    # Environment variables template
+│   ├── package.json                    # Frontend dependencies
+│   ├── vite.config.js                  # Vite configuration
+│   ├── tailwind.config.js              # Tailwind CSS configuration
+│   └── vercel.json                     # Vercel deployment config
 │
-├── server/                          # Backend Node.js application
-│   ├── index.js                    # Express server with all routes
-│   ├── .env                        # Environment variables (gitignored)
-│   ├── .env.example                # Environment variables template
-│   ├── package.json                # Backend dependencies
-│   └── vercel.json                 # Vercel deployment config
+├── server/                              # Backend Node.js application
+│   ├── config/
+│   │   └── database.js                 # MongoDB connection management
+│   ├── middleware/
+│   │   └── errorHandler.js             # Global error handler
+│   ├── routes/
+│   │   ├── adminRoutes.js              # /admin — login & credentials
+│   │   ├── cartRoutes.js               # /cart — cart operations
+│   │   ├── menuRoutes.js               # /menu — menu CRUD
+│   │   └── orderRoutes.js              # /orders — order management
+│   ├── index.js                        # Express entry point
+│   ├── .env.example                    # Environment variables template
+│   ├── package.json                    # Backend dependencies
+│   └── vercel.json                     # Vercel deployment config
 │
-└── Readme.md                       # Project documentation
+└── Readme.md                            # Project documentation
 ```
 
 ---
 
 ## 🔒 Security Features
 
-- ✅ Admin route protection with authentication
-- ✅ Session-based cart management
-- ✅ Input validation on all forms
-- ✅ Error handling with user-friendly messages
-- ✅ Secure credential storage in MongoDB
-- ✅ CORS configuration for API security
-- ✅ Helmet.js for Express security headers
-- ✅ Environment variables for sensitive data
+- ✅ **Server-side authentication** — Admin credentials verified on server, never exposed to client
+- ✅ **Helmet.js** — Security headers (XSS protection, content policy, etc.)
+- ✅ **CORS** — Configured Cross-Origin Resource Sharing
+- ✅ **Input validation** — Server-side validation on all endpoints
+- ✅ **Global error handler** — Centralized error handling middleware
+- ✅ **Environment variables** — Sensitive data kept out of source code
+- ✅ **Session-based cart** — Isolated cart per browser session
+- ✅ **Graceful shutdown** — Clean MongoDB disconnection on server stop
