@@ -1,101 +1,62 @@
-import React, { useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { adminApi } from "../services/api";
+import FlashMessage from "./FlashMessage";
 
 const ChangeCredentials = () => {
   const [prevUsername, setPrevUsername] = useState("");
   const [prevPassword, setPrevPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const navigate = useNavigate();
 
-  // Handle Credential Update
-  const handleUpdateCredentials = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccessMessage("");
+    setFlash(null);
 
-    // Validate input fields
     if (!prevUsername || !prevPassword || !newUsername || !newPassword) {
-      setError("All fields are required.");
-      setTimeout(() => setError(""), 2000); // Clear error after 2 seconds
+      setFlash({ message: "All fields are required.", type: "error" });
       return;
     }
 
+    setLoading(true);
     try {
-      // Step 1: Verify Previous Credentials
-      const verifyResponse = await fetch(`${API_URL}/admin/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: String(prevUsername),
-          password: String(prevPassword),
-        }),
+      await adminApi.updateCredentials({
+        prevUsername: String(prevUsername),
+        prevPassword: String(prevPassword),
+        newUsername: String(newUsername),
+        newPassword: String(newPassword),
       });
 
-      if (!verifyResponse.ok) {
-        const errorData = await verifyResponse.json();
-        console.error("Verification failed:", errorData);
-        throw new Error(errorData.message || "Invalid previous credentials.");
-      }
-
-      // Step 2: Update New Credentials
-      const updateResponse = await fetch(`${API_URL}/admin`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: String(newUsername),
-          password: String(newPassword),
-        }),
-      });
-
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        console.error("Update failed:", errorData);
-        throw new Error(errorData.message || "Failed to update credentials.");
-      }
-
-      // Success message and reset fields
-      setSuccessMessage("Credentials updated successfully! Redirecting...");
+      setFlash({ message: "Credentials updated successfully! Redirecting...", type: "success" });
       setPrevUsername("");
       setPrevPassword("");
       setNewUsername("");
       setNewPassword("");
-
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      console.error("Error:", err.message);
-      setError(err.message);
-
-      // Clear error message after 2 seconds
-      setTimeout(() => setError(""), 2000);
+      setFlash({ message: err.message, type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 my-30 mx-2">
+      {flash && (
+        <FlashMessage message={flash.message} type={flash.type} onClose={() => setFlash(null)} />
+      )}
+
       <div className="bg-white p-8 shadow-lg rounded-3xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-blue-600 text-center mb-6">
           Change Admin Credentials
         </h2>
 
-        {/* Error and Success Messages */}
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {successMessage && (
-          <p className="text-green-500 text-center mb-4">{successMessage}</p>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleUpdateCredentials} className="space-y-6">
-          {/* Previous Username Input */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Previous Username
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">Previous Username</label>
             <input
               type="text"
               placeholder="Enter Previous Username"
@@ -105,11 +66,8 @@ const ChangeCredentials = () => {
             />
           </div>
 
-          {/* Previous Password Input */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Previous Password
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">Previous Password</label>
             <input
               type="password"
               placeholder="Enter Previous Password"
@@ -119,11 +77,8 @@ const ChangeCredentials = () => {
             />
           </div>
 
-          {/* New Username Input */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              New Username
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">New Username</label>
             <input
               type="text"
               placeholder="Enter New Username"
@@ -133,11 +88,8 @@ const ChangeCredentials = () => {
             />
           </div>
 
-          {/* New Password Input */}
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              New Password
-            </label>
+            <label className="block text-gray-700 font-semibold mb-2">New Password</label>
             <input
               type="password"
               placeholder="Enter New Password"
@@ -147,21 +99,19 @@ const ChangeCredentials = () => {
             />
           </div>
 
-          {/* Update Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-md transition"
+            disabled={loading}
+            className={`w-full font-semibold py-3 rounded-xl shadow-md transition text-white ${
+              loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Update Credentials
+            {loading ? "Updating..." : "Update Credentials"}
           </button>
         </form>
 
-        {/* Back Button */}
         <div className="mt-6 text-center text-gray-500">
-          <a
-            className="text-blue-500 cursor-pointer hover:underline"
-            href="/login"
-          >
+          <a className="text-blue-500 cursor-pointer hover:underline" href="/login">
             Back to Login
           </a>
           <p className="my-2">Need help? Contact support</p>

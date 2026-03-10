@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { menuApi, cartApi } from "../services/api";
+import { getSessionId } from "../utils/session";
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -6,88 +9,46 @@ const Menu = () => {
   const [selectedSection, setSelectedSection] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [cartCount, setCartCount] = useState(0); // Cart count state
-  const [addedStatus, setAddedStatus] = useState({}); // Added Status for Each Item
-
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // Generate or retrieve a unique session ID
-  const getSessionId = () => {
-    let sessionId = localStorage.getItem("sessionId");
-    if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      localStorage.setItem("sessionId", sessionId);
-    }
-    return sessionId;
-  };
+  const [cartCount, setCartCount] = useState(0);
+  const [addedStatus, setAddedStatus] = useState({});
+  const navigate = useNavigate();
 
   const sessionId = getSessionId();
 
-  // Fetch Cart Count from Backend
   const fetchCartCount = async () => {
     try {
-      const response = await fetch(`${API_URL}/orders/?sessionId=${sessionId}`);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch cart count. Status: ${response.status}`
-        );
-      }
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        setCartCount(data.length); // Update cart count based on the array length
-      } else {
-        throw new Error("Invalid response format. Expected an array.");
-      }
-    } catch (error) {
-      console.error("Error fetching cart count:", error.message);
-      setCartCount(0); // Reset cart count to 0 in case of an error
+      const data = await cartApi.getItems(sessionId);
+      setCartCount(Array.isArray(data) ? data.length : 0);
+    } catch {
+      setCartCount(0);
     }
   };
 
-  // Handle Order Button Click
-  const handleOrder = async (item) => {
+  const handleAddToCart = async (item) => {
     try {
-      const response = await fetch(`${API_URL}/order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId, // Include session ID
-          name: item.name,
-          price: item.price,
-          quantity: 1, // Default quantity
-          image: item.image,
-          cuisine: item.cuisine,
-          section: item.section,
-        }),
+      await cartApi.addItem({
+        sessionId,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        image: item.image,
+        cuisine: item.cuisine,
+        section: item.section,
       });
 
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to add the item to the cart.");
-
-      // Update cart count after adding an item
       fetchCartCount();
-
-      // Show 'Added' status for 2 seconds
       setAddedStatus((prev) => ({ ...prev, [item._id]: true }));
-      setTimeout(() => {
-        setAddedStatus((prev) => ({ ...prev, [item._id]: false }));
-      }, 2000);
+      setTimeout(() => setAddedStatus((prev) => ({ ...prev, [item._id]: false })), 2000);
     } catch (error) {
       console.error("Error adding item to cart:", error);
       alert("Failed to add item to cart. Please try again.");
     }
   };
 
-  // Fetch menu items from backend
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch(`${API_URL}/`);
-        if (!response.ok) throw new Error("Failed to fetch menu items.");
-        const data = await response.json();
+        const data = await menuApi.getAll();
         setMenuItems(data);
       } catch (err) {
         setError(err.message);
@@ -96,23 +57,18 @@ const Menu = () => {
       }
     };
     fetchMenu();
-    fetchCartCount(); // Fetch cart count when the component mounts
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchCartCount();
   }, []);
 
-  // Extract unique sections
   const sections = useMemo(() => {
-    const uniqueSections = {};
+    const unique = {};
     menuItems.forEach((item) => {
       const normalized = item.section.trim().toLowerCase();
-      if (!uniqueSections[normalized]) {
-        uniqueSections[normalized] = item.section.trim();
-      }
+      if (!unique[normalized]) unique[normalized] = item.section.trim();
     });
-    return ["All", ...Object.values(uniqueSections)];
+    return ["All", ...Object.values(unique)];
   }, [menuItems]);
 
-  // Filtering logic
   const filteredItems = useMemo(() => {
     return menuItems.filter(
       (item) =>
@@ -122,14 +78,11 @@ const Menu = () => {
     );
   }, [menuItems, searchTerm, selectedSection]);
 
-  // Group items by section
   const groupedItems = useMemo(() => {
     const grouped = {};
     filteredItems.forEach((item) => {
       const section = item.section.trim();
-      if (!grouped[section]) {
-        grouped[section] = [];
-      }
+      if (!grouped[section]) grouped[section] = [];
       grouped[section].push(item);
     });
     return grouped;
@@ -141,13 +94,9 @@ const Menu = () => {
         Explore Our Delicious Menu
       </h2>
 
-      {/* Error or Loading Messages */}
-      {loading && (
-        <p className="text-center text-lg text-gray-600">Loading Menu...</p>
-      )}
+      {loading && <p className="text-center text-lg text-gray-600">Loading Menu...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Search & Filter Section */}
       {!loading && !error && (
         <div className="flex flex-col md:flex-row justify-center gap-4 my-8 items-center">
           <input
@@ -163,20 +112,15 @@ const Menu = () => {
             onChange={(e) => setSelectedSection(e.target.value)}
           >
             {sections.map((section, index) => (
-              <option
-                key={index}
-                value={section}
-                className="capitalize cursor-pointer"
-              >
+              <option key={index} value={section} className="capitalize cursor-pointer">
                 {section}
               </option>
             ))}
           </select>
 
-          {/* Cart Button with Dynamic Badge */}
           <div
-            className="cart py-2 px-6 bg-blue-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-[100%] align-center"
-            onClick={() => (window.location.href = "/cart")}
+            className="cart py-2 px-6 bg-blue-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-full"
+            onClick={() => navigate("/cart")}
           >
             <span className="md:hidden font-bold">Cart</span>
             <img
@@ -189,22 +133,18 @@ const Menu = () => {
         </div>
       )}
 
-      {/* Menu Items */}
       {!loading && !error && (
         <div className="flex flex-col gap-4 capitalize mx-auto">
           {Object.entries(groupedItems).map(([section, items]) => (
             <div key={section} className="w-full mx-auto">
-              <h3 className="text-3xl font-bold text-gray-700 mb-1">
-                {section}
-              </h3>
+              <h3 className="text-3xl font-bold text-gray-700 mb-1">{section}</h3>
               <hr />
               <div className="flex flex-wrap gap-6 my-4 mx-auto">
                 {items.map((item) => (
                   <div
                     key={item._id}
-                    className="flex w-[100%] md:w-[40%] lg:w-[30%] border border-gray-200 rounded-lg shadow-md overflow-hidden md:flex-row flex-col bg-white"
+                    className="flex w-full md:w-[40%] lg:w-[30%] border border-gray-200 rounded-lg shadow-md overflow-hidden md:flex-row flex-col bg-white"
                   >
-                    {/* Image Section */}
                     <div className="w-full md:w-1/3 h-48 md:h-auto flex">
                       <img
                         src={item.image || "https://via.placeholder.com/300"}
@@ -212,33 +152,18 @@ const Menu = () => {
                         className="object-cover w-full h-full"
                       />
                     </div>
-
-                    {/* Details Section */}
-                    <div className="p-4 flex flex-col justify-between flex-grow">
-                      <h4 className="text-xl font-bold text-gray-900">
-                        {item.name}
-                      </h4>
+                    <div className="p-4 flex flex-col justify-between grow">
+                      <h4 className="text-xl font-bold text-gray-900">{item.name}</h4>
                       <p className="text-gray-700">
-                        Cuisine:{" "}
-                        <span className="text-gray-800 font-semibold">
-                          {item.cuisine}
-                        </span>
+                        Cuisine: <span className="text-gray-800 font-semibold">{item.cuisine}</span>
                       </p>
-                      <p className="text-blue-600 font-semibold">
-                        ₹{item.price}
-                      </p>
-                      {item.info && (
-                        <p className="text-gray-500 italic">
-                          Info: {item.info}
-                        </p>
-                      )}
-
-                      {/* Order Button with Added Message */}
+                      <p className="text-blue-600 font-semibold">₹{item.price}</p>
+                      {item.info && <p className="text-gray-500 italic">Info: {item.info}</p>}
                       <button
                         className={`my-2 p-2 cursor-pointer rounded-md w-full ${
                           addedStatus[item._id] ? "bg-green-500" : "bg-blue-600"
                         } text-white`}
-                        onClick={() => handleOrder(item)}
+                        onClick={() => handleAddToCart(item)}
                         disabled={addedStatus[item._id]}
                       >
                         {addedStatus[item._id] ? "Added" : "Add To Cart"}
@@ -252,7 +177,6 @@ const Menu = () => {
         </div>
       )}
 
-      {/* No Items Found Message */}
       {!loading && !error && filteredItems.length === 0 && (
         <p className="text-center text-lg text-gray-600">
           No items available for the selected section or search term.
