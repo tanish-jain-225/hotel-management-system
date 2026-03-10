@@ -15,8 +15,8 @@ const app = express();
 const PORT = process.env.PORT;
 
 // Middleware
-app.use(cors());
-app.use(helmet());
+app.use(cors({ origin: true }));
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 
 // Health Check
