@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getCollection } from "../config/database.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -14,8 +15,8 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// POST /menu — Add a new menu item
-router.post("/", async (req, res, next) => {
+// POST /menu — Add a new menu item (protected)
+router.post("/", authMiddleware, async (req, res, next) => {
   try {
     const { name, cuisine, section, price, image, info } = req.body;
 
@@ -44,8 +45,8 @@ router.post("/check", async (req, res, next) => {
   }
 });
 
-// DELETE /menu/:id — Delete a menu item by ID
-router.delete("/:id", async (req, res, next) => {
+// DELETE /menu/:id — Delete a menu item by ID (protected)
+router.delete("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
 

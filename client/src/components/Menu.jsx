@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { menuApi, cartApi } from "../services/api";
 import { getSessionId } from "../utils/session";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import { Search, ShoppingCart, Filter } from "lucide-react";
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -37,11 +40,12 @@ const Menu = () => {
       });
 
       fetchCartCount();
+      toast.success(`${item.name} added to cart!`);
       setAddedStatus((prev) => ({ ...prev, [item._id]: true }));
       setTimeout(() => setAddedStatus((prev) => ({ ...prev, [item._id]: false })), 2000);
     } catch (error) {
       console.error("Error adding item to cart:", error);
-      alert("Failed to add item to cart. Please try again.");
+      toast.error("Failed to add item to cart");
     }
   };
 
@@ -89,100 +93,150 @@ const Menu = () => {
   }, [filteredItems]);
 
   return (
-    <div className="container mx-auto px-4 py-10 bg-gray-100 my-30 md:my-10">
-      <h2 className="text-4xl font-bold text-center text-blue-600 mb-8">
-        Explore Our Delicious Menu
-      </h2>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-10 my-30 md:my-10"
+    >
+      <div className="text-center mb-16">
+        <motion.h2 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-5xl font-black text-gray-900 tracking-tight mb-4"
+        >
+          Explore Our <span className="text-blue-600 underline decoration-blue-200 decoration-8 underline-offset-4">Delicious Menu</span>
+        </motion.h2>
+        <p className="text-gray-500 font-medium text-lg max-w-2xl mx-auto">
+          Savor the finest cuisines crafted with passion and fresh ingredients. 
+          Your culinary journey starts here.
+        </p>
+      </div>
 
-      {loading && <p className="text-center text-lg text-gray-600">Loading Menu...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-lg text-gray-600 font-medium">Preparing the delicacies...</p>
+        </div>
+      )}
+      {error && <p className="text-center text-red-500 font-bold bg-red-100 p-4 rounded-lg">{error}</p>}
 
       {!loading && !error && (
         <div className="flex flex-col md:flex-row justify-center gap-4 my-8 items-center">
-          <input
-            type="text"
-            placeholder="Search For Food"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none capitalize cursor-pointer"
-            value={selectedSection}
-            onChange={(e) => setSelectedSection(e.target.value)}
-          >
-            {sections.map((section, index) => (
-              <option key={index} value={section} className="capitalize cursor-pointer">
-                {section}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search For Food"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="relative w-full">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <select
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none capitalize cursor-pointer bg-white appearance-none"
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+            >
+              {sections.map((section, index) => (
+                <option key={index} value={section} className="capitalize">
+                  {section}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <div
-            className="cart py-2 px-6 bg-blue-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-full"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="cart py-2 px-6 bg-blue-600 rounded-md flex items-center justify-center cursor-pointer text-white font-semibold text-2xl gap-2 w-full shadow-lg"
             onClick={() => navigate("/cart")}
           >
-            <span className="md:hidden font-bold">Cart</span>
-            <img
-              src="https://cdn-icons-png.flaticon.com/128/3514/3514491.png"
-              alt="cart"
-              className="w-[30px] invert"
-            />
-            ({cartCount})
-          </div>
+            <ShoppingCart size={24} />
+            <span>({cartCount})</span>
+          </motion.div>
         </div>
       )}
 
       {!loading && !error && (
-        <div className="flex flex-col gap-4 capitalize mx-auto">
+        <div className="flex flex-col gap-8 capitalize mx-auto">
           {Object.entries(groupedItems).map(([section, items]) => (
-            <div key={section} className="w-full mx-auto">
-              <h3 className="text-3xl font-bold text-gray-700 mb-1">{section}</h3>
-              <hr />
-              <div className="flex flex-wrap gap-6 my-4 mx-auto">
-                {items.map((item) => (
-                  <div
-                    key={item._id}
-                    className="flex w-full md:w-[40%] lg:w-[30%] border border-gray-200 rounded-lg shadow-md overflow-hidden md:flex-row flex-col bg-white"
-                  >
-                    <div className="w-full md:w-1/3 h-48 md:h-auto flex">
-                      <img
-                        src={item.image || "https://via.placeholder.com/300"}
-                        alt={item.name}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                    <div className="p-4 flex flex-col justify-between grow">
-                      <h4 className="text-xl font-bold text-gray-900">{item.name}</h4>
-                      <p className="text-gray-700">
-                        Cuisine: <span className="text-gray-800 font-semibold">{item.cuisine}</span>
-                      </p>
-                      <p className="text-blue-600 font-semibold">₹{item.price}</p>
-                      {item.info && <p className="text-gray-500 italic">Info: {item.info}</p>}
-                      <button
-                        className={`my-2 p-2 cursor-pointer rounded-md w-full ${
-                          addedStatus[item._id] ? "bg-green-500" : "bg-blue-600"
-                        } text-white`}
-                        onClick={() => handleAddToCart(item)}
-                        disabled={addedStatus[item._id]}
-                      >
-                        {addedStatus[item._id] ? "Added" : "Add To Cart"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              key={section} 
+              className="w-full mx-auto"
+            >
+              <h3 className="text-3xl font-bold text-gray-800 mb-2 border-l-4 border-blue-600 pl-4">{section}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-6">
+                <AnimatePresence mode="popLayout">
+                  {items.map((item, index) => (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      key={item._id}
+                      className="flex flex-col border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl transition-shadow overflow-hidden bg-white group"
+                    >
+                      <div className="w-full h-48 overflow-hidden">
+                        <motion.img
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.4 }}
+                          src={item.image || "https://via.placeholder.com/300"}
+                          alt={item.name}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                      <div className="p-5 flex flex-col justify-between grow">
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{item.name}</h4>
+                            <span className="text-sm font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-full">{item.cuisine}</span>
+                          </div>
+                          {item.info && <p className="text-gray-500 italic text-sm mb-4 line-clamp-2">{item.info}</p>}
+                        </div>
+                        <div className="flex items-center justify-between mt-4">
+                          <p className="text-2xl font-bold text-gray-900">₹{item.price}</p>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`px-4 py-2 cursor-pointer rounded-xl font-semibold transition-colors ${
+                              addedStatus[item._id] ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
+                            } shadow-md`}
+                            onClick={() => handleAddToCart(item)}
+                            disabled={addedStatus[item._id]}
+                          >
+                            {addedStatus[item._id] ? "Added ✅" : "Add To Cart"}
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
       {!loading && !error && filteredItems.length === 0 && (
-        <p className="text-center text-lg text-gray-600">
-          No items available for the selected section or search term.
-        </p>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-20 bg-white rounded-3xl shadow-inner mt-10"
+        >
+          <Search size={48} className="mx-auto text-gray-300 mb-4" />
+          <p className="text-xl text-gray-500 font-medium">
+            We couldn't find any dishes matching your search.
+          </p>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

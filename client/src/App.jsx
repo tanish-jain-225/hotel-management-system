@@ -8,13 +8,15 @@ import Login from "./components/Login";
 import Admin from "./components/Admin";
 import AllOrders from "./components/AllOrders";
 import ChangeCredentials from "./components/ChangeCredentials";
+import { Toaster } from "react-hot-toast";
 import "./App.css";
 
 const App = () => {
   return (
     <AuthProvider>
+      <Toaster position="top-center" reverseOrder={false} />
       <BrowserRouter>
-        <div className="flex flex-col min-h-screen bg-gray-100">
+        <div className="flex flex-col min-h-screen">
           <Navbar />
           <div className="grow pt-16">
             <Routes>

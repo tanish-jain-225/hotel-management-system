@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getCollection } from "../config/database.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -42,20 +43,29 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// GET /orders — Fetch customer orders (all or filtered by sessionId)
+// GET /orders — Fetch customer orders (all for admin, specific for session)
 router.get("/", async (req, res, next) => {
   try {
     const { sessionId } = req.query;
-    const query = sessionId ? { sessionId } : {};
-    const orders = await (await getCollection("customerOrders")).find(query).toArray();
+    
+    // If no sessionId, this is an admin request for ALL orders
+    if (!sessionId) {
+      return authMiddleware(req, res, async () => {
+        const orders = await (await getCollection("customerOrders")).find().sort({ orderDate: -1 }).toArray();
+        res.json(orders);
+      });
+    }
+
+    // Otherwise, fetch orders for specific session (customer)
+    const orders = await (await getCollection("customerOrders")).find({ sessionId }).sort({ orderDate: -1 }).toArray();
     res.json(orders);
   } catch (error) {
     next(error);
   }
 });
 
-// DELETE /orders/:id — Mark order as completed
-router.delete("/:id", async (req, res, next) => {
+// DELETE /orders/:id — Mark order as completed (protected)
+router.delete("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
 
