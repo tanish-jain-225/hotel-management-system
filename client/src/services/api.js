@@ -29,6 +29,7 @@ export const menuApi = {
   getAll: () => request("/menu"),
   add: (item) => request("/menu", { method: "POST", body: JSON.stringify(item) }),
   checkExists: (name) => request("/menu/check", { method: "POST", body: JSON.stringify({ name }) }),
+  update: (id, item) => request(`/menu/${id}`, { method: "PUT", body: JSON.stringify(item) }),
   delete: (id) => request(`/menu/${id}`, { method: "DELETE" }),
 };
 
@@ -59,4 +60,10 @@ export const orderApi = {
 export const adminApi = {
   login: (credentials) => request("/admin/login", { method: "POST", body: JSON.stringify(credentials) }),
   updateCredentials: (data) => request("/admin/credentials", { method: "PUT", body: JSON.stringify(data) }),
+};
+
+// Settings API
+export const settingsApi = {
+  get: () => request("/admin/settings"),
+  update: (data) => request("/admin/settings", { method: "PUT", body: JSON.stringify(data) }),
 };

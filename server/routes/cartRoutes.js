@@ -7,13 +7,29 @@ const router = Router();
 // POST /cart — Add item to cart
 router.post("/", async (req, res, next) => {
   try {
-    const { sessionId, name, price, quantity, image, cuisine, section } = req.body;
+    const { sessionId, name, quantity } = req.body;
 
-    if (!sessionId || !name || !price || !quantity) {
-      return res.status(400).json({ message: "Session ID, name, price, and quantity are required" });
+    if (!sessionId || !name || !quantity) {
+      return res.status(400).json({ message: "Session ID, name, and quantity are required" });
     }
 
-    const cartItem = { sessionId, name, price, quantity, image, cuisine, section };
+    const menuCol = await getCollection("menuItems");
+    const dbItem = await menuCol.findOne({ name: name.trim() });
+
+    if (!dbItem) {
+      return res.status(404).json({ message: `Item '${name}' not found in the menu.` });
+    }
+
+    const cartItem = {
+      sessionId,
+      name: dbItem.name,
+      price: parseFloat(dbItem.price),
+      quantity: parseInt(quantity) || 1,
+      image: dbItem.image,
+      cuisine: dbItem.cuisine,
+      section: dbItem.section,
+    };
+
     const result = await (await getCollection("orders")).insertOne(cartItem);
 
     if (!result.acknowledged) {

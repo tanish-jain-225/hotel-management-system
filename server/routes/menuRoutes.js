@@ -24,9 +24,22 @@ router.post("/", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const newItem = { name, cuisine, section, price, image, info };
-    await (await getCollection("menuItems")).insertOne(newItem);
-    res.status(201).json({ message: "Menu item added successfully", newItem });
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({ message: "Price must be a valid positive number" });
+    }
+
+    const newItem = {
+      name: name.trim(),
+      cuisine: cuisine.trim(),
+      section: section.trim(),
+      price: parsedPrice,
+      image: image.trim(),
+      info: info.trim()
+    };
+
+    const result = await (await getCollection("menuItems")).insertOne(newItem);
+    res.status(201).json({ message: "Menu item added successfully", newItem: { ...newItem, _id: result.insertedId } });
   } catch (error) {
     next(error);
   }
@@ -40,6 +53,52 @@ router.post("/check", async (req, res, next) => {
 
     const existing = await (await getCollection("menuItems")).findOne({ name: name.trim() });
     res.json({ exists: !!existing });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /menu/:id — Update an existing menu item (protected)
+router.put("/:id", authMiddleware, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, cuisine, section, price, image, info } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid menu item ID" });
+    }
+
+    if (!name || !cuisine || !section || !price || !image || !info) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({ message: "Price must be a valid positive number" });
+    }
+
+    const result = await (await getCollection("menuItems")).updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          name: name.trim(),
+          cuisine: cuisine.trim(),
+          section: section.trim(),
+          price: parsedPrice,
+          image: image.trim(),
+          info: info.trim(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Menu item not found" });
+    }
+
+    res.json({
+      message: "Menu item updated successfully",
+      updatedItem: { _id: id, name, cuisine, section, price: parsedPrice, image, info }
+    });
   } catch (error) {
     next(error);
   }

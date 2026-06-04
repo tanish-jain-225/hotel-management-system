@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { menuApi } from "../services/api";
+import { menuApi, settingsApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { PlusCircle, Trash2, Search, Filter, ClipboardList, LayoutGrid, DollarSign, Image as ImageIcon, UtensilsCrossed } from "lucide-react";
+import { PlusCircle, Trash2, Search, Filter, ClipboardList, LayoutGrid, IndianRupee, Image as ImageIcon, UtensilsCrossed, Edit, XCircle, Percent } from "lucide-react";
 
 const INITIAL_MENU_DATA = {
   name: "",
@@ -29,6 +29,11 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSection, setSelectedSection] = useState("All");
+  const [editingId, setEditingId] = useState(null);
+
+  // Settings States
+  const [gstRateInput, setGstRateInput] = useState("5");
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const fetchMenuItems = useCallback(async () => {
     setLoading(true);
@@ -43,12 +48,59 @@ const Admin = () => {
     }
   }, []);
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      const data = await settingsApi.get();
+      setGstRateInput(String(data.gstRate));
+    } catch {
+      toast.error("Failed to load GST settings.");
+    }
+  }, []);
+
   useEffect(() => {
     fetchMenuItems();
-  }, [fetchMenuItems]);
+    fetchSettings();
+  }, [fetchMenuItems, fetchSettings]);
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    const rate = parseFloat(gstRateInput);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      toast.error("Please enter a valid percentage between 0 and 100");
+      return;
+    }
+
+    setSettingsLoading(true);
+    const loadToast = toast.loading("Updating GST Rate...");
+    try {
+      await settingsApi.update({ gstRate: rate });
+      toast.success("GST rate updated successfully! 🎉", { id: loadToast });
+    } catch (err) {
+      toast.error(err.message || "Failed to update settings", { id: loadToast });
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setMenuData({ ...menuData, [e.target.name]: e.target.value });
+  };
+
+  const handleEditClick = (item) => {
+    setEditingId(item._id);
+    setMenuData({
+      name: item.name,
+      cuisine: item.cuisine,
+      section: item.section,
+      price: item.price,
+      image: item.image,
+      info: item.info || "",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setMenuData(INITIAL_MENU_DATA);
   };
 
   const handleSubmit = async (e) => {
@@ -60,20 +112,30 @@ const Admin = () => {
       )
     );
 
-    if (!cleaned.name || !cleaned.cuisine || !cleaned.section || !cleaned.image || isNaN(cleaned.price) || cleaned.price <= 0) {
-      toast.error("All fields are required, and price must be valid.");
+    if (!cleaned.name || !cleaned.cuisine || !cleaned.section || !cleaned.image || isNaN(cleaned.price) || parseFloat(cleaned.price) <= 0) {
+      toast.error("All fields are required, and price must be a valid positive number.");
       return;
     }
 
-    const loadToast = toast.loading("Adding item...");
+    const isEditing = !!editingId;
+    const loadToast = toast.loading(isEditing ? "Updating item..." : "Adding item...");
     setLoading(true);
     try {
-      const data = await menuApi.add(cleaned);
-      toast.success("Menu item added successfully!", { id: loadToast });
-      const newItem = data.newItem;
-      setMenuItems((prev) => [...prev, newItem]);
-      if (selectedSection === "All" || selectedSection === newItem.section) {
-        setFilteredItems((prev) => [...prev, newItem]);
+      if (isEditing) {
+        const data = await menuApi.update(editingId, { ...cleaned, price: parseFloat(cleaned.price) });
+        toast.success("Menu item updated successfully!", { id: loadToast });
+        const updated = data.updatedItem;
+        setMenuItems((prev) => prev.map((item) => (item._id === editingId ? updated : item)));
+        setFilteredItems((prev) => prev.map((item) => (item._id === editingId ? updated : item)));
+        setEditingId(null);
+      } else {
+        const data = await menuApi.add({ ...cleaned, price: parseFloat(cleaned.price) });
+        toast.success("Menu item added successfully!", { id: loadToast });
+        const newItem = data.newItem;
+        setMenuItems((prev) => [...prev, newItem]);
+        if (selectedSection === "All" || selectedSection === newItem.section) {
+          setFilteredItems((prev) => [...prev, newItem]);
+        }
       }
       setMenuData(INITIAL_MENU_DATA);
     } catch (error) {
@@ -155,90 +217,144 @@ const Admin = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Add New Item Form */}
+        {/* Left Column: Form & Settings */}
         <div className="lg:col-span-1">
-          <motion.div 
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 sticky top-24"
-          >
+          <div className="flex flex-col gap-8 lg:sticky lg:top-28">
+            {/* Add New Item Form */}
+            <motion.div 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
+            >
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  {editingId ? <Edit className="text-blue-600" /> : <PlusCircle className="text-blue-600" />}
+                  {editingId ? "Edit Menu Item" : "Add New Item"}
+                </span>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="text-gray-400 hover:text-gray-600 text-sm flex items-center gap-1 font-semibold cursor-pointer"
+                  >
+                    <XCircle size={16} /> Cancel
+                  </button>
+                )}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <UtensilsCrossed className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Dish Name"
+                      value={menuData.name}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="cuisine"
+                      placeholder="Cuisine"
+                      value={menuData.cuisine}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    />
+                    <input
+                      type="text"
+                      name="section"
+                      placeholder="Section"
+                      value={menuData.section}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    />
+                  </div>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input
+                      type="number"
+                      step="any"
+                      name="price"
+                      placeholder="Price (INR)"
+                      value={menuData.price}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    />
+                  </div>
+                  <div className="relative">
+                    <ImageIcon className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      name="image"
+                      placeholder="Image URL"
+                      value={menuData.image}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    />
+                  </div>
+                  <textarea
+                    name="info"
+                    placeholder="Short Description"
+                    value={menuData.info}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-24 bg-white text-gray-800"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all mt-4 cursor-pointer"
+                >
+                  {loading ? "Saving..." : (editingId ? "Save Changes" : "Add to Menu")}
+                </motion.button>
+              </form>
+            </motion.div>
+
+            {/* GST Configuration Panel */}
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
+            >
             <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <PlusCircle className="text-blue-600" /> Add New Item
+              <Percent className="text-blue-600" size={20} /> GST Configuration
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-4">
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">GST Rate (%)</label>
                 <div className="relative">
-                  <UtensilsCrossed className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Dish Name"
-                    value={menuData.name}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="cuisine"
-                    placeholder="Cuisine"
-                    value={menuData.cuisine}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                  <input
-                    type="text"
-                    name="section"
-                    placeholder="Section"
-                    value={menuData.section}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                  <Percent className="absolute left-3 top-3.5 text-gray-400" size={18} />
                   <input
                     type="number"
-                    name="price"
-                    placeholder="Price (INR)"
-                    value={menuData.price}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    step="any"
+                    placeholder="e.g. 5"
+                    value={gstRateInput}
+                    onChange={(e) => setGstRateInput(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                    required
                   />
                 </div>
-                <div className="relative">
-                  <ImageIcon className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input
-                    type="text"
-                    name="image"
-                    placeholder="Image URL"
-                    value={menuData.image}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <textarea
-                  name="info"
-                  placeholder="Short Description"
-                  value={menuData.info}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-24"
-                />
               </div>
-
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-blue-700 transition-all mt-4 cursor-pointer"
+                disabled={settingsLoading}
+                className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md hover:bg-blue-700 transition-all cursor-pointer"
               >
-                {loading ? "Adding..." : "Add to Menu"}
+                {settingsLoading ? "Saving..." : "Save GST Rate"}
               </motion.button>
             </form>
           </motion.div>
         </div>
+      </div>
 
         {/* Menu Items Management */}
         <div className="lg:col-span-2 space-y-8">
@@ -313,8 +429,21 @@ const Admin = () => {
                                 <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">₹{item.price}</span>
                               </div>
                               <p className="text-xs text-gray-500 mt-1">{item.cuisine}</p>
+                              {item.info && (
+                                <p className="text-xs text-gray-400 mt-2 line-clamp-2 italic">
+                                  {item.info}
+                                </p>
+                              )}
                             </div>
-                            <div className="flex justify-end mt-2">
+                            <div className="flex justify-end mt-2 gap-2">
+                              <motion.button
+                                whileHover={{ scale: 1.1, color: "#2563eb" }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleEditClick(item)}
+                                className="p-2 text-gray-300 hover:text-blue-600 transition-colors cursor-pointer"
+                              >
+                                <Edit size={18} />
+                              </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.1, color: "#ef4444" }}
                                 whileTap={{ scale: 0.9 }}

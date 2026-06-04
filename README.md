@@ -39,7 +39,7 @@
 ### 🔐 **Administrative Control**
 - **📊 Active Order Tracking**: Real-time dashboard for managing orders. Mark them as completed with one click.
 - **🛠️ Menu CRUD**: Full control over menu items including name, cuisine, price, and descriptions.
-- **⚙️ Simple Auth System**: Streamlined plain-text credential matching for administrative ease.
+- **⚙️ Secure Auth System**: Production-grade bcrypt credential hashing and verification.
 - **🕵️ Debug Mode**: Server-side logs for monitoring credential verification and system health.
 
 ---
@@ -105,8 +105,8 @@ For detailed configuration, see the [Full Setup Guide](./docs/SETUP.md).
 ## 📡 API Endpoints
 
 ### **Admin** (`/admin`)
-- `POST /login`: Simple plain-text login. Returns JWT.
-- `PUT /credentials`: Update admin username/password.
+- `POST /login`: Secure bcrypt-verified login. Returns JWT.
+- `PUT /credentials`: Update admin username/password (requires previous password verification).
 
 ### **Menu** (`/menu`)
 - `GET /`: Retrieve all items.

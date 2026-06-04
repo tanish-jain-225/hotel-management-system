@@ -8,15 +8,46 @@ const router = Router();
 // POST /orders — Place a customer order
 router.post("/", async (req, res, next) => {
   try {
-    const { sessionId, name, contact, address, paymentMethod, items, subtotal, gstAmount, grandTotal } = req.body;
+    const { sessionId, name, contact, address, paymentMethod, items } = req.body;
 
     if (!sessionId || !name || !contact || !address || !paymentMethod || !items?.length) {
       return res.status(400).json({ message: "All order fields are required" });
     }
 
-    if (isNaN(subtotal) || isNaN(gstAmount) || isNaN(grandTotal)) {
-      return res.status(400).json({ message: "Invalid price values" });
+    const menuCol = await getCollection("menuItems");
+    let calculatedSubtotal = 0;
+    const verifiedItems = [];
+
+    // Verify each item's price against the database
+    for (const item of items) {
+      const dbItem = await menuCol.findOne({ name: item.name.trim() });
+      if (!dbItem) {
+        return res.status(400).json({ message: `Item '${item.name}' not found in the menu.` });
+      }
+
+      const itemPrice = parseFloat(dbItem.price);
+      const quantity = parseInt(item.quantity) || 1;
+      const itemTotal = itemPrice * quantity;
+
+      calculatedSubtotal += itemTotal;
+      verifiedItems.push({
+        name: dbItem.name,
+        price: itemPrice,
+        quantity: quantity,
+        image: dbItem.image,
+        cuisine: dbItem.cuisine,
+        section: dbItem.section,
+        totalPrice: itemTotal,
+      });
     }
+
+    const settingsCol = await getCollection("systemSettings");
+    let settings = await settingsCol.findOne({ _id: "system_settings" });
+    const gstRatePercent = settings && typeof settings.gstRate === "number" ? settings.gstRate : 5;
+    const gstRateFraction = gstRatePercent / 100;
+
+    const gstAmount = calculatedSubtotal * gstRateFraction;
+    const grandTotal = calculatedSubtotal + gstAmount;
 
     const customerOrders = await getCollection("customerOrders");
     const orderCount = await customerOrders.countDocuments();
@@ -26,18 +57,24 @@ router.post("/", async (req, res, next) => {
       serialNumber,
       sessionId,
       customer: { name, contact, address },
-      items,
+      items: verifiedItems,
       paymentMethod,
-      subtotal: parseFloat(subtotal.toFixed(2)),
+      subtotal: parseFloat(calculatedSubtotal.toFixed(2)),
       gstAmount: parseFloat(gstAmount.toFixed(2)),
       grandTotal: parseFloat(grandTotal.toFixed(2)),
       orderDate: new Date(),
+      status: "Placed" // Track live status
     };
 
     const result = await customerOrders.insertOne(orderData);
     if (!result.acknowledged) throw new Error("Failed to place order");
 
-    res.status(201).json({ message: "Order placed successfully", orderId: result.insertedId, serialNumber });
+    res.status(201).json({ 
+      message: "Order placed successfully", 
+      orderId: result.insertedId, 
+      serialNumber,
+      grandTotal: orderData.grandTotal
+    });
   } catch (error) {
     next(error);
   }

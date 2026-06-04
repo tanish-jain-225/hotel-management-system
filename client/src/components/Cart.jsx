@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { cartApi, orderApi } from "../services/api";
+import { cartApi, orderApi, settingsApi } from "../services/api";
 import { getSessionId } from "../utils/session";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -13,6 +13,9 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ name: "", contact: "", address: "" });
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState(null);
+  const [gstRate, setGstRate] = useState(0.05);
   const navigate = useNavigate();
 
   const sessionId = getSessionId();
@@ -31,6 +34,15 @@ const Cart = () => {
 
   useEffect(() => {
     fetchCartItems();
+    const fetchGst = async () => {
+      try {
+        const settings = await settingsApi.get();
+        setGstRate(parseFloat(settings.gstRate) / 100);
+      } catch (err) {
+        console.error("Failed to load GST rate", err);
+      }
+    };
+    fetchGst();
   }, []);
 
   const handleRemoveFromCart = async (itemId, itemName) => {
@@ -62,7 +74,7 @@ const Cart = () => {
 
   const calculateTotals = () => {
     const subtotal = groupedOrders.reduce((sum, item) => sum + item.totalPrice, 0);
-    const gstAmount = subtotal * GST_RATE;
+    const gstAmount = subtotal * gstRate;
     const grandTotal = subtotal + gstAmount;
     return { subtotal, gstAmount, grandTotal };
   };
@@ -92,20 +104,34 @@ const Cart = () => {
 
     const orderToast = toast.loading("Placing your order...");
     try {
-      await orderApi.place(orderData);
+      const res = await orderApi.place(orderData);
+      setPlacedOrder({
+        ...orderData,
+        orderId: res.orderId,
+        serialNumber: res.serialNumber,
+        grandTotal: res.grandTotal,
+        orderDate: new Date(),
+      });
       setCartItems([]);
       toast.success("Order placed successfully! 🎉", { id: orderToast });
       await cartApi.clear(sessionId);
-      setTimeout(() => navigate("/"), 2000);
+      setShowReceipt(true);
     } catch {
       toast.error("Failed to place the order.", { id: orderToast });
     }
   };
 
+  const handleCloseReceipt = () => {
+    setShowReceipt(false);
+    setPlacedOrder(null);
+    navigate("/my-orders");
+  };
+
   const totals = calculateTotals();
 
   return (
-    <motion.div 
+    <>
+      <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="container mx-auto p-4 md:p-10 my-30 md:my-10 max-w-6xl"
@@ -243,7 +269,7 @@ const Cart = () => {
                     <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>GST (5%)</span>
+                    <span>GST ({(gstRate * 100).toFixed(0)}%)</span>
                     <span className="font-semibold">₹{totals.gstAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-2xl font-bold text-gray-900 pt-3 border-t border-gray-100">
@@ -268,7 +294,85 @@ const Cart = () => {
           </div>
         </div>
       )}
-    </motion.div>
+      </motion.div>
+
+      <AnimatePresence>
+        {showReceipt && placedOrder && (
+          <ReceiptModal order={placedOrder} onClose={handleCloseReceipt} />
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+const ReceiptModal = ({ order, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full relative border border-gray-100 max-h-[90vh] overflow-y-auto text-gray-800 animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div className="text-center pb-6 border-b border-dashed border-gray-200">
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Dine<span className="text-blue-600">Ease</span></h2>
+          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-1">Order Placed Successfully! 🎉</p>
+          <div className="mt-4 flex justify-between text-xs text-gray-500 text-left">
+            <div>
+              <p><span className="font-bold text-gray-700">Order ID:</span> #{order.orderId ? order.orderId.substring(18) : "N/A"}</p>
+              <p><span className="font-bold text-gray-700">Serial No:</span> {order.serialNumber}</p>
+            </div>
+            <div className="text-right">
+              <p>{new Date(order.orderDate).toLocaleDateString()}</p>
+              <p>{new Date(order.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="py-4 border-b border-dashed border-gray-200 text-sm text-gray-600">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Customer Details</p>
+          <p><span className="font-bold text-gray-700">Name:</span> {order.name}</p>
+          <p><span className="font-bold text-gray-700">Phone:</span> {order.contact}</p>
+          <p><span className="font-bold text-gray-700">Table/Address:</span> {order.address}</p>
+        </div>
+
+        <div className="py-4 border-b border-dashed border-gray-200 text-sm">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Items</p>
+          <div className="space-y-2">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="flex justify-between text-gray-800">
+                <span>{item.name} <span className="text-gray-400 text-xs font-semibold">x{item.quantity}</span></span>
+                <span className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="py-4 space-y-2 text-sm text-gray-600">
+          <div className="flex justify-between">
+            <span>Subtotal</span>
+            <span className="font-semibold text-gray-800">₹{order.subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>GST Amount</span>
+            <span className="font-semibold text-gray-800">₹{order.gstAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-lg font-black text-gray-900 border-t border-dashed border-gray-200 pt-3">
+            <span>Grand Total</span>
+            <span className="text-blue-600">₹{order.grandTotal.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <button
+            onClick={onClose}
+            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-lg shadow-blue-500/20"
+          >
+            Track My Order Status
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

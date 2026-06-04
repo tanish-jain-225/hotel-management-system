@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu as MenuIcon, X, LogOut, ShieldCheck, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { Menu as MenuIcon, X, LogOut, ShieldCheck, User as UserIcon, LayoutDashboard, ClipboardList } from "lucide-react";
 import toast from "react-hot-toast";
 
 const Navbar = () => {
@@ -19,6 +19,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Menu", path: "/", icon: <UserIcon size={18} />, show: true },
+    { name: "My Orders", path: "/my-orders", icon: <ClipboardList size={18} />, show: true },
     { name: "Admin", path: "/admin", icon: <LayoutDashboard size={18} />, show: isAuthenticated },
   ];
 

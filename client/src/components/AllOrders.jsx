@@ -3,12 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { orderApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { ArrowLeft, CheckCircle, Clock, CreditCard, User, Hash, Calendar, Package } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, CreditCard, User, Hash, Calendar, Package, Printer } from "lucide-react";
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [printingOrder, setPrintingOrder] = useState(null);
   const navigate = useNavigate();
+
+  const handlePrintReceipt = (order) => {
+    setPrintingOrder(order);
+  };
+
+  useEffect(() => {
+    if (printingOrder) {
+      const timer = setTimeout(() => {
+        window.print();
+        setPrintingOrder(null);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [printingOrder]);
 
   const fetchOrders = async () => {
     try {
@@ -142,15 +157,27 @@ const AllOrders = () => {
                         </div>
                       </div>
                       
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
-                        onClick={() => handleOrderDone(order)}
-                      >
-                        <CheckCircle size={20} />
-                        Mark as Done
-                      </motion.button>
+                      <div className="flex flex-col gap-3">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-2.5 rounded-2xl border border-gray-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          onClick={() => handlePrintReceipt(order)}
+                        >
+                          <Printer size={18} />
+                          Print Receipt
+                        </motion.button>
+                        
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          onClick={() => handleOrderDone(order)}
+                        >
+                          <CheckCircle size={20} />
+                          Mark as Done
+                        </motion.button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -159,6 +186,66 @@ const AllOrders = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Hidden print-only receipt view */}
+      {printingOrder && (
+        <div className="hidden print:block print-receipt absolute inset-0 bg-white text-black p-8 z-50">
+          <div className="max-w-md mx-auto border border-gray-200 p-6 rounded-3xl">
+            <div className="text-center pb-6 border-b border-dashed border-gray-300">
+              <h2 className="text-2xl font-black tracking-tight uppercase">DineEase</h2>
+              <p className="text-xs font-semibold uppercase tracking-wider mt-1 text-gray-500">Official Order Receipt</p>
+              <div className="mt-4 flex justify-between text-xs text-gray-600 text-left">
+                <div>
+                  <p><span className="font-bold">Order ID:</span> #{printingOrder._id ? printingOrder._id.substring(18) : "N/A"}</p>
+                  <p><span className="font-bold">Serial No:</span> {printingOrder.serialNumber}</p>
+                </div>
+                <div className="text-right">
+                  <p>{new Date(printingOrder.orderDate).toLocaleDateString()}</p>
+                  <p>{new Date(printingOrder.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="py-4 border-b border-dashed border-gray-300 text-sm text-gray-600">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Customer Details</p>
+              <p><span className="font-bold">Name:</span> {printingOrder.customer.name}</p>
+              <p><span className="font-bold">Phone:</span> {printingOrder.customer.contact}</p>
+              <p><span className="font-bold">Table/Address:</span> {printingOrder.customer.address}</p>
+            </div>
+
+            <div className="py-4 border-b border-dashed border-gray-300 text-sm">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Items</p>
+              <div className="space-y-2">
+                {printingOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-gray-800">
+                    <span>{item.name} <span className="text-gray-400 text-xs font-semibold">x{item.quantity}</span></span>
+                    <span className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="py-4 space-y-2 text-sm text-gray-600">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-semibold text-gray-800">₹{printingOrder.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST Amount</span>
+                <span className="font-semibold text-gray-800">₹{printingOrder.gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-black text-gray-900 border-t border-dashed border-gray-200 pt-3">
+                <span>Grand Total</span>
+                <span className="font-bold text-blue-600">₹{printingOrder.grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+            
+            <div className="text-center text-xs text-gray-400 mt-6 pt-4 border-t border-dashed border-gray-200 uppercase tracking-widest font-bold">
+              DineEase Kitchen Copy
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

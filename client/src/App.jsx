@@ -8,6 +8,8 @@ import Login from "./components/Login";
 import Admin from "./components/Admin";
 import AllOrders from "./components/AllOrders";
 import ChangeCredentials from "./components/ChangeCredentials";
+import ProtectedRoute from "./components/ProtectedRoute";
+import MyOrders from "./components/MyOrders";
 import { Toaster } from "react-hot-toast";
 import "./App.css";
 
@@ -23,12 +25,27 @@ const App = () => {
               <Route path="/" element={<Menu />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/all-orders" element={<AllOrders />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <Admin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/all-orders"
+                element={
+                  <ProtectedRoute>
+                    <AllOrders />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/change-credentials"
                 element={<ChangeCredentials />}
               />
+              <Route path="/my-orders" element={<MyOrders />} />
             </Routes>
           </div>
           <Footer />

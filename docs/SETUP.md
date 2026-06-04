@@ -15,14 +15,7 @@ Follow these steps to set up DineEase for local development and production deplo
 
 ### 1. Database Configuration
 1. Create a MongoDB database named `hotelMenu`.
-2. Create a collection named `adminCredentials`.
-3. Insert an initial document to set your login:
-   ```json
-   {
-     "username": "admin",
-     "password": "1234"
-   }
-   ```
+2. Create a collection named `adminCredentials`. (Note: The application will automatically seed this with default credentials `{ "username": "admin", "password": "1234" }` securely on first connection if empty).
 
 ### 2. Backend Setup (`/server`)
 1. Navigate to the server folder:
@@ -61,11 +54,12 @@ Follow these steps to set up DineEase for local development and production deplo
 
 ## 🔐 Administrative Access
 
-The system uses a **Simple Plain-Text Matching** logic for admin tasks:
+The system uses a **Bcrypt Hashed Authentication** model for admin tasks:
 
-- **Login**: Accessed via `/login`. Matches submitted `username` and `password` directly against the database.
-- **Security Settings**: Accessed via the "Reset Credentials?" link on the login page.
-- **Debug Logs**: Check your server terminal to see real-time comparisons between entered and fetched credentials.
+- **Login**: Accessed via `/login`. Verifies submitted credentials against secure bcrypt hashes in the database.
+- **Auto-Seeding**: If the database `adminCredentials` collection is empty, it automatically seeds `{ "username": "admin", "password": "1234" }` (stored securely as a bcrypt hash) on first database connection.
+- **Auto-Migration**: Any existing plain-text passwords in your database are automatically migrated to secure bcrypt hashes on startup/first database connection.
+- **Security Settings**: Accessed via the "Reset Credentials?" link on the login page. Allows updating credentials by verifying the previous password and storing the new password as a bcrypt hash.
 
 ---
 
