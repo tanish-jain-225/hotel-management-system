@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "node menuSeeder.js",
+    "build": "node menuSeeder.js --dry-run",
     "seed": "node menuSeeder.js",
     "seed:reset": "node menuSeeder.js --reset",
     "seed:dry": "node menuSeeder.js --dry-run"

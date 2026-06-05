@@ -16,6 +16,12 @@ npm install
 npm run dev
 ```
 
+To validate the seeder without writing to the database:
+
+```bash
+npm run build
+```
+
 ### Options
 
 - `--reset` — clears the existing `menuItems` collection before seeding
