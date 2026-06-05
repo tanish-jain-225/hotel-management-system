@@ -1,0 +1,15 @@
+{
+  "name": "dineease-tester",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "node menuSeeder.js",
+    "seed": "node menuSeeder.js",
+    "seed:reset": "node menuSeeder.js --reset",
+    "seed:dry": "node menuSeeder.js --dry-run"
+  },
+  "dependencies": {
+    "mongodb": "^6.14.2"
+  }
+}

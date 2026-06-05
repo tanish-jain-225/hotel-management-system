@@ -55,20 +55,74 @@ const Cart = () => {
     }
   };
 
-  const groupedOrders = cartItems.reduce((acc, item) => {
-    const existing = acc.find((order) => order.name === item.name);
-    if (existing) {
-      existing.quantity += item.quantity || 1;
-      existing.totalPrice += item.price * (item.quantity || 1);
-    } else {
-      acc.push({
-        ...item,
-        quantity: item.quantity || 1,
-        totalPrice: item.price * (item.quantity || 1),
+  const handleIncrease = async (group) => {
+    try {
+      await cartApi.addItem({
+        sessionId,
+        name: group.name,
+        price: group.price,
+        quantity: 1,
+        image: group.image,
+        cuisine: group.cuisine,
+        section: group.section,
       });
+      await fetchCartItems();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to increase quantity");
     }
-    return acc;
-  }, []);
+  };
+
+  const handleDecrease = async (group) => {
+    try {
+      // remove one document corresponding to this grouped item
+      if (!group.ids || group.ids.length === 0) return;
+      const idToRemove = group.ids[group.ids.length - 1];
+      await cartApi.removeItem(idToRemove, sessionId);
+      await fetchCartItems();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to decrease quantity");
+    }
+  };
+
+  const handleRemoveAll = async (group) => {
+    try {
+      for (const id of group.ids.slice()) {
+        await cartApi.removeItem(id, sessionId);
+      }
+      toast.success(`${group.name} removed`);
+      await fetchCartItems();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove item(s)");
+    }
+  };
+
+  // Group raw cart items by name and keep list of document ids for each grouped item
+  const groupedOrders = (() => {
+    const map = {};
+    for (const item of cartItems) {
+      if (!map[item.name]) {
+        map[item.name] = {
+          name: item.name,
+          cuisine: item.cuisine,
+          section: item.section,
+          price: item.price,
+          image: item.image,
+          ids: [],
+          quantity: 0,
+          totalPrice: 0,
+        };
+      }
+      const entry = map[item.name];
+      const qty = item.quantity || 1;
+      entry.quantity += qty;
+      entry.totalPrice += item.price * qty;
+      entry.ids.push(item._id);
+    }
+    return Object.values(map);
+  })();
 
   const totalItems = groupedOrders.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -181,7 +235,7 @@ const Cart = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  key={item._id}
+                  key={item.name}
                   className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-shadow"
                 >
                   <div className="w-full md:w-40 h-40">
@@ -200,15 +254,29 @@ const Cart = () => {
                       <p className="text-xl font-bold text-blue-600">₹{item.totalPrice}</p>
                     </div>
                     <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-lg">
-                        <span className="text-gray-500 text-sm">Qty:</span>
-                        <span className="font-bold text-lg">{item.quantity}</span>
+                      <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                        <button
+                          onClick={() => handleDecrease(item)}
+                          className="px-3 py-1 bg-white rounded-full text-gray-700 font-bold"
+                          aria-label={`Decrease ${item.name}`}
+                        >
+                          -
+                        </button>
+                        <div className="px-4 py-2 bg-gray-50 rounded-xl font-semibold">{item.quantity}</div>
+                        <button
+                          onClick={() => handleIncrease(item)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded-full font-bold"
+                          aria-label={`Increase ${item.name}`}
+                        >
+                          +
+                        </button>
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.1, color: "#ef4444" }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => handleRemoveFromCart(item._id, item.name)}
+                        onClick={() => handleRemoveAll(item)}
                         className="p-2 text-gray-400 cursor-pointer"
+                        title={`Remove all ${item.name}`}
                       >
                         <Trash2 size={24} />
                       </motion.button>

@@ -1,128 +1,111 @@
-# 🍽️ DineEase - Premium Hotel Menu & Order Management System
+# 🍽️ DineEase — Hotel Menu & Order Management System
 
-<div align="center">
+Unified project documentation and quickstart for the DineEase repository. This README links into the `client` and `server` modules and provides a concise workflow for local development and deployment.
 
-**A sophisticated, full-stack restaurant management platform built with React, Node.js, and MongoDB.**
-
-[![React](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Framer Motion](https://img.shields.io/badge/Framer_Motion-Animations-ff69b4?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
-
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Installation](#-installation--setup) • [API Guide](#-api-endpoints) • [Deployment](#-deployment)
-
-</div>
+**Contents:** [Client README](client/README.md) • [Server README](server/README.md) • [Setup Guide](docs/SETUP.md)
 
 ---
 
-## 📖 Overview
+## Overview
 
-**DineEase** is a production-grade menu and order management system designed for modern culinary businesses. It combines a **premium glassmorphic user interface** with a robust administrative backend, providing a seamless workflow from browsing the menu to order fulfillment.
+DineEase is a full-stack menu and order management system built with React (Vite) on the frontend and Node.js + Express on the backend, persisting data in MongoDB.
 
-### 🎯 Key Highlights
+This repository contains two main runnable projects:
 
-- **Modern Light Theme**: A professional, clean design system using `slate-50` and `blue-600`.
-- **Fluid UI**: 60fps animations powered by Framer Motion and Lucide icons.
-- **Smart Logistics**: Automated GST (5%) calculations, subtotaling, and chronological serial numbering for orders.
-- **Responsive Architecture**: Fully optimized for mobile, tablet, and desktop environments.
+- `client/` — React SPA (UI, cart, auth)
+- `server/` — Express API (menu, cart, orders, admin)
 
----
-
-## ✨ Features
-
-### 👥 **Customer Interface**
-- **🍕 Interactive Menu**: Browse items with high-quality images, category filtering, and real-time search.
-- **🛒 Persistent Cart**: Manage selections with automatic item grouping and session persistence.
-- **📦 Seamless Checkout**: Simple form for customer details with instant subtotal and GST breakdown.
-- **💳 Multi-Payment Support**: Visual options for Pay on Counter, UPI, and Card.
-
-### 🔐 **Administrative Control**
-- **📊 Active Order Tracking**: Real-time dashboard for managing orders. Mark them as completed with one click.
-- **🛠️ Menu CRUD**: Full control over menu items including name, cuisine, price, and descriptions.
-- **⚙️ Secure Auth System**: Production-grade bcrypt credential hashing and verification.
-- **🕵️ Debug Mode**: Server-side logs for monitoring credential verification and system health.
+Both subprojects have their own `README.md` files that include details and examples. See the links at the top of this file.
 
 ---
 
-## 🛠️ Tech Stack
+## Quick Start (Local)
 
-| Layer | Technologies |
-|-------|--------------|
-| **Frontend** | React 19, Vite, Framer Motion, Lucide Icons, React Hot Toast, Tailwind CSS 4 |
-| **Backend** | Node.js, Express.js, JSON Web Tokens (JWT), Helmet.js, CORS |
-| **Database** | MongoDB (Native Driver) |
-| **Environment** | Dotenv for Secure Config Management |
+1. Clone the repository:
 
----
-
-## 🏗️ Folder Structure
-
-```text
-hotel-management-system/
-├── client/                 # React Frontend
-│   ├── src/
-│   │   ├── components/    # UI Components (Menu, Cart, Admin, etc.)
-│   │   ├── context/       # Auth & State Management
-│   │   ├── services/      # Centralized API Interface
-│   │   └── utils/         # Helpers & Session Management
-├── server/                 # Node.js Backend
-│   ├── config/            # Database Connection Logic
-│   ├── middleware/        # JWT Authentication Guard
-│   ├── routes/            # Modular API Endpoints (Admin, Orders, Menu)
-│   └── index.js           # Server Entry Point
-└── docs/                   # Extended Setup Documentation
+```bash
+git clone https://github.com/tanish-jain-225/hotel-management-system.git
+cd hotel-management-system
 ```
 
----
+2. Start the backend (API):
 
-## 📦 Installation & Setup
+```bash
+cd server
+npm install
+# Copy .env.example → .env and set MONGO_URI and JWT_SECRET
+npm run dev
+```
 
-1. **Clone the Repo**:
-   ```bash
-   git clone https://github.com/tanish-jain-225/hotel-management-system.git
-   ```
+3. Start the frontend (UI) in a separate terminal:
 
-2. **Backend Setup**:
-   ```bash
-   cd server
-   npm install
-   # Create .env based on .env.example
-   npm run dev
-   ```
+```bash
+cd client
+npm install
+# Copy .env.example → .env and set VITE_API_URL_DEV to your backend URL
+npm run dev
+```
 
-3. **Frontend Setup**:
-   ```bash
-   cd client
-   npm install
-   # Create .env based on .env.example
-   npm run dev
-   ```
-
-For detailed configuration, see the [Full Setup Guide](./docs/SETUP.md).
+Open the app in your browser at the Vite dev server URL (usually http://localhost:5173).
 
 ---
 
-## 📡 API Endpoints
+## Environment variables
 
-### **Admin** (`/admin`)
-- `POST /login`: Secure bcrypt-verified login. Returns JWT.
-- `PUT /credentials`: Update admin username/password (requires previous password verification).
+- `server/.env` (from `server/.env.example`):
+  - `MONGO_URI` — MongoDB connection string
+  - `PORT` — (optional) server port, defaults to `5000`
+  - `JWT_SECRET` — JWT signing secret
 
-### **Menu** (`/menu`)
-- `GET /`: Retrieve all items.
-- `POST /`: Add a new item (Protected).
-- `DELETE /:id`: Delete an item (Protected).
+- `client/.env` (from `client/.env.example`):
+  - `VITE_API_URL_DEV` — backend base URL for development
+  - `VITE_API_URL_PROD` — backend base URL for production
 
----
-
-## 🌐 Deployment
-
-Optimized for **Vercel**. Both `client/` and `server/` contain `vercel.json` configurations.
-- Ensure `VITE_API_URL_PROD` is set in your Vercel Frontend environment.
-- Ensure `MONGO_URI` and `JWT_SECRET` are set in your Vercel Backend environment.
+Note: Vite only exposes env vars prefixed with `VITE_` to the browser.
 
 ---
 
-<div align="center">
-Built with ❤️ for High-End Hospitality
-</div>
+## Scripts (quick reference)
+
+- Root: none (run subproject scripts)
+- `server`: `npm run dev` (development), `npm start` (production)
+- `client`: `npm run dev`, `npm run build`, `npm run preview`, `npm run lint`
+
+---
+
+## API Overview
+
+See the full API surface in `server/routes/`. Main groups:
+
+- `/menu` — list, add, remove menu items
+- `/cart` — manage user's cart
+- `/orders` — create and view orders
+- `/admin` — authentication and protected admin actions
+
+For exact request shapes and examples, see the `server/README.md` and inspect `server/routes/`.
+
+---
+
+## Deployment
+
+This repo is configured for Vercel deployments. Each project contains a `vercel.json` for platform settings.
+
+- Frontend: set `VITE_API_URL_PROD` in Vercel dashboard for the client deployment.
+- Backend: set `MONGO_URI`, `JWT_SECRET`, and any other secrets in the server deployment environment.
+
+---
+
+## Contributing
+
+If you'd like to contribute, please:
+
+1. Open an issue describing the change or bug.
+2. Create a feature branch, add tests where appropriate, and open a pull request.
+
+---
+
+## Useful Links
+
+- Client README: [client/README.md](client/README.md)
+- Server README: [server/README.md](server/README.md)
+- Full setup: [docs/SETUP.md](docs/SETUP.md)

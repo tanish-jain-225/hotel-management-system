@@ -1,7 +1,15 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 
+const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = "hotelMenu";
+const COLLECTIONS = {
+  adminCredentials: "adminCredentials",
+  menuItems: "menuItems",
+  orders: "orders",
+  customerOrders: "customerOrders",
+  systemSettings: "systemSettings",
+};
 
 let client;
 let db;
@@ -10,7 +18,7 @@ let connectionPromise;
 // Helper function to seed initial admin credentials securely
 async function seedAdminCredentials(database) {
   try {
-    const adminCol = database.collection("adminCredentials");
+    const adminCol = database.collection(COLLECTIONS.adminCredentials);
     const count = await adminCol.countDocuments();
     if (count === 0) {
       const salt = await bcrypt.genSalt(10);
@@ -31,7 +39,7 @@ async function seedAdminCredentials(database) {
 // Helper function to migrate plain text passwords to bcrypt hashes
 async function migrateAdminCredentials(database) {
   try {
-    const adminCol = database.collection("adminCredentials");
+    const adminCol = database.collection(COLLECTIONS.adminCredentials);
     const admin = await adminCol.findOne();
     if (admin && admin.password) {
       const passwordStr = String(admin.password);
@@ -59,7 +67,7 @@ export async function connectToDatabase() {
   if (!connectionPromise) {
     connectionPromise = (async () => {
       try {
-        client = new MongoClient(process.env.MONGO_URI);
+        client = new MongoClient(MONGO_URI);
         await client.connect();
         db = client.db(DB_NAME);
         console.log("Connected to MongoDB");

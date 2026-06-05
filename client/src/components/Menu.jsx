@@ -13,6 +13,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cartCount, setCartCount] = useState(0);
+  const [cartMap, setCartMap] = useState({});
   const [addedStatus, setAddedStatus] = useState({});
   const navigate = useNavigate();
 
@@ -22,6 +23,19 @@ const Menu = () => {
     try {
       const data = await cartApi.getItems(sessionId);
       setCartCount(Array.isArray(data) ? data.length : 0);
+      // build name -> { quantity, ids[] } map for quick lookup
+      if (Array.isArray(data)) {
+        const map = {};
+        data.forEach((it) => {
+          const name = it.name;
+          if (!map[name]) map[name] = { quantity: 0, ids: [] };
+          map[name].quantity += it.quantity || 1;
+          map[name].ids.push(it._id);
+        });
+        setCartMap(map);
+      } else {
+        setCartMap({});
+      }
     } catch {
       setCartCount(0);
     }
@@ -39,13 +53,33 @@ const Menu = () => {
         section: item.section,
       });
 
-      fetchCartCount();
+      // refresh cart state
+      await fetchCartCount();
       toast.success(`${item.name} added to cart!`);
       setAddedStatus((prev) => ({ ...prev, [item._id]: true }));
-      setTimeout(() => setAddedStatus((prev) => ({ ...prev, [item._id]: false })), 2000);
+      setTimeout(() => setAddedStatus((prev) => ({ ...prev, [item._id]: false })), 1200);
     } catch (error) {
       console.error("Error adding item to cart:", error);
       toast.error("Failed to add item to cart");
+    }
+  };
+
+  const handleIncrease = async (item) => {
+    await handleAddToCart(item);
+  };
+
+  const handleDecrease = async (item) => {
+    try {
+      // find a cart document id for this item
+      const entry = cartMap[item.name];
+      if (!entry || entry.ids.length === 0) return;
+      const idToRemove = entry.ids[entry.ids.length - 1];
+      await cartApi.removeItem(idToRemove, sessionId);
+      await fetchCartCount();
+      toast.success(`${item.name} quantity decreased`);
+    } catch (err) {
+      console.error("Error decreasing item:", err);
+      toast.error("Failed to decrease item quantity");
     }
   };
 
@@ -202,17 +236,37 @@ const Menu = () => {
                         </div>
                         <div className="flex items-center justify-between mt-4">
                           <p className="text-2xl font-bold text-gray-900">₹{item.price}</p>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className={`px-4 py-2 cursor-pointer rounded-xl font-semibold transition-colors ${
-                              addedStatus[item._id] ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
-                            } shadow-md`}
-                            onClick={() => handleAddToCart(item)}
-                            disabled={addedStatus[item._id]}
-                          >
-                            {addedStatus[item._id] ? "Added ✅" : "Add To Cart"}
-                          </motion.button>
+                          {cartMap[item.name] && cartMap[item.name].quantity > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleDecrease(item)}
+                                className="px-3 py-2 bg-gray-100 rounded-full text-gray-700 font-bold"
+                                aria-label={`Decrease ${item.name}`}
+                              >
+                                -
+                              </button>
+                              <div className="px-4 py-2 bg-gray-50 rounded-xl font-semibold">{cartMap[item.name].quantity}</div>
+                              <button
+                                onClick={() => handleIncrease(item)}
+                                className="px-3 py-2 bg-blue-600 text-white rounded-full font-bold"
+                                aria-label={`Increase ${item.name}`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`px-4 py-2 cursor-pointer rounded-xl font-semibold transition-colors ${
+                                addedStatus[item._id] ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
+                              } shadow-md`}
+                              onClick={() => handleAddToCart(item)}
+                              disabled={addedStatus[item._id]}
+                            >
+                              {addedStatus[item._id] ? "Added ✅" : "Add To Cart"}
+                            </motion.button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
