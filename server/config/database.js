@@ -22,7 +22,7 @@ async function seedAdminCredentials(database) {
     const count = await adminCol.countDocuments();
     if (count === 0) {
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash("1234", salt);
+      const hashedPassword = await bcrypt.hash("123456", salt);
       await adminCol.insertOne({
         username: "admin",
         password: hashedPassword,
