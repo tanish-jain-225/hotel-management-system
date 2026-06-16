@@ -9,8 +9,37 @@ router.post("/", async (req, res, next) => {
   try {
     const { sessionId, name, quantity } = req.body;
 
-    if (!sessionId || !name || !quantity) {
+    if (!sessionId || !name || quantity === undefined) {
       return res.status(400).json({ message: "Session ID, name, and quantity are required" });
+    }
+
+    const parsedQty = parseInt(quantity);
+    if (isNaN(parsedQty)) {
+      return res.status(400).json({ message: "Quantity must be a valid integer" });
+    }
+
+    const ordersCol = await getCollection("cartItems");
+
+    // Check if item already exists in cart for this session
+    const existingItem = await ordersCol.findOne({ sessionId, name: name.trim() });
+
+    if (existingItem) {
+      const newQty = (existingItem.quantity || 1) + parsedQty;
+      if (newQty <= 0) {
+        await ordersCol.deleteOne({ _id: existingItem._id });
+        return res.json({ message: "Item removed from cart" });
+      } else {
+        await ordersCol.updateOne(
+          { _id: existingItem._id },
+          { $set: { quantity: newQty } }
+        );
+        return res.json({ message: "Item quantity updated", cartItem: { ...existingItem, quantity: newQty } });
+      }
+    }
+
+    // If it doesn't exist, we only add it if quantity > 0
+    if (parsedQty <= 0) {
+      return res.status(400).json({ message: "Cannot add new item with zero or negative quantity" });
     }
 
     const menuCol = await getCollection("menuItems");
@@ -24,19 +53,20 @@ router.post("/", async (req, res, next) => {
       sessionId,
       name: dbItem.name,
       price: parseFloat(dbItem.price),
-      quantity: parseInt(quantity) || 1,
+      quantity: parsedQty,
       image: dbItem.image,
       cuisine: dbItem.cuisine,
       section: dbItem.section,
+      createdAt: new Date(),
     };
 
-    const result = await (await getCollection("orders")).insertOne(cartItem);
+    const result = await ordersCol.insertOne(cartItem);
 
     if (!result.acknowledged) {
       throw new Error("Failed to add item to cart");
     }
 
-    res.status(201).json({ message: "Item added to cart", cartItem });
+    res.status(201).json({ message: "Item added to cart", cartItem: { ...cartItem, _id: result.insertedId } });
   } catch (error) {
     next(error);
   }
@@ -48,7 +78,7 @@ router.get("/", async (req, res, next) => {
     const { sessionId } = req.query;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    const items = await (await getCollection("orders")).find({ sessionId }).toArray();
+    const items = await (await getCollection("cartItems")).find({ sessionId }).toArray();
     res.json(items);
   } catch (error) {
     next(error);
@@ -61,7 +91,7 @@ router.delete("/clear", async (req, res, next) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    await (await getCollection("orders")).deleteMany({ sessionId });
+    await (await getCollection("cartItems")).deleteMany({ sessionId });
     res.json({ message: "Cart cleared successfully" });
   } catch (error) {
     next(error);
@@ -78,7 +108,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Valid session ID and item ID are required" });
     }
 
-    const result = await (await getCollection("orders")).deleteOne({
+    const result = await (await getCollection("cartItems")).deleteOne({
       _id: new ObjectId(id),
       sessionId,
     });

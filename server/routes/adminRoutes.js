@@ -26,10 +26,13 @@ router.post("/login", async (req, res, next) => {
     const isPasswordCorrect = await bcrypt.compare(password, admin.password);
 
     if (String(admin.username) === String(username) && isPasswordCorrect) {
+      if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ message: "JWT_SECRET is not configured on the server" });
+      }
       // Generate JWT
       const token = jwt.sign(
         { id: admin._id, username: admin.username },
-        process.env.JWT_SECRET || "dineease_default_jwt_secret_key",
+        process.env.JWT_SECRET,
         { expiresIn: "24h" }
       );
       return res.json({ message: "Login successful", token });
@@ -42,7 +45,7 @@ router.post("/login", async (req, res, next) => {
 });
 
 // PUT /admin/credentials — Update admin credentials
-router.put("/credentials", async (req, res, next) => {
+router.put("/credentials", authMiddleware, async (req, res, next) => {
   try {
     const { prevUsername, prevPassword, newUsername, newPassword } = req.body;
 
@@ -119,6 +122,38 @@ router.put("/settings", authMiddleware, async (req, res, next) => {
     );
 
     res.json({ message: "Settings updated successfully", settings: { gstRate: parsedGst } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /admin/analytics — Retrieve dashboard analytics (protected)
+router.get("/analytics", authMiddleware, async (req, res, next) => {
+  try {
+    const ordersCol = await getCollection("customerOrders");
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const activeOrdersCount = await ordersCol.countDocuments({ status: { $ne: "Completed" } });
+
+    const completedTodayQuery = {
+      status: "Completed",
+      orderDate: { $gte: startOfToday, $lte: endOfToday }
+    };
+    const completedTodayCount = await ordersCol.countDocuments(completedTodayQuery);
+
+    const completedTodayOrders = await ordersCol.find(completedTodayQuery).toArray();
+    const revenueToday = completedTodayOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+
+    res.json({
+      activeOrders: activeOrdersCount,
+      completedToday: completedTodayCount,
+      revenueToday: parseFloat(revenueToday.toFixed(2))
+    });
   } catch (error) {
     next(error);
   }

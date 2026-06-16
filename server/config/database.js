@@ -67,7 +67,10 @@ export async function connectToDatabase() {
   if (!connectionPromise) {
     connectionPromise = (async () => {
       try {
-        client = new MongoClient(MONGO_URI);
+        client = new MongoClient(MONGO_URI, {
+          connectTimeoutMS: 10000,
+          serverSelectionTimeoutMS: 10000
+        });
         await client.connect();
         db = client.db(DB_NAME);
         console.log("Connected to MongoDB");
@@ -75,6 +78,15 @@ export async function connectToDatabase() {
         // Seed and migrate admin credentials
         await seedAdminCredentials(db);
         await migrateAdminCredentials(db);
+
+        // Ensure TTL index on cartItems collection
+        try {
+          const cartCol = db.collection("cartItems");
+          await cartCol.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+          console.log("Ensured TTL index on cartItems collection");
+        } catch (idxError) {
+          console.error("Error creating TTL index on cartItems:", idxError);
+        }
 
         return db;
       } catch (error) {

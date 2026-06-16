@@ -19,10 +19,18 @@ router.post("/", async (req, res, next) => {
     const verifiedItems = [];
 
     // Verify each item's price against the database
+    const itemNames = items.map(it => String(it.name).trim());
+    const dbItems = await menuCol.find({ name: { $in: itemNames } }).toArray();
+    const dbItemsMap = new Map(dbItems.map(it => [it.name, it]));
+
     for (const item of items) {
-      const dbItem = await menuCol.findOne({ name: item.name.trim() });
+      const dbItem = dbItemsMap.get(item.name.trim());
       if (!dbItem) {
         return res.status(400).json({ message: `Item '${item.name}' not found in the menu.` });
+      }
+
+      if (dbItem.available === false) {
+        return res.status(400).json({ message: `Item '${item.name}' is currently out of stock.` });
       }
 
       const itemPrice = parseFloat(dbItem.price);
@@ -49,9 +57,13 @@ router.post("/", async (req, res, next) => {
     const gstAmount = calculatedSubtotal * gstRateFraction;
     const grandTotal = calculatedSubtotal + gstAmount;
 
-    const customerOrders = await getCollection("customerOrders");
-    const orderCount = await customerOrders.countDocuments();
-    const serialNumber = orderCount + 1;
+    const countersCol = await getCollection("counters");
+    const counter = await countersCol.findOneAndUpdate(
+      { _id: "orderSerialNumber" },
+      { $inc: { seq: 1 } },
+      { upsert: true, returnDocument: "after" }
+    );
+    const serialNumber = counter.seq;
 
     const orderData = {
       serialNumber,
@@ -66,6 +78,7 @@ router.post("/", async (req, res, next) => {
       status: "Placed" // Track live status
     };
 
+    const customerOrders = await getCollection("customerOrders");
     const result = await customerOrders.insertOne(orderData);
     if (!result.acknowledged) throw new Error("Failed to place order");
 
@@ -88,7 +101,9 @@ router.get("/", async (req, res, next) => {
     // If no sessionId, this is an admin request for ALL orders
     if (!sessionId) {
       return authMiddleware(req, res, async () => {
-        const orders = await (await getCollection("customerOrders")).find().sort({ orderDate: -1 }).toArray();
+        const { status } = req.query;
+        const query = status === "Completed" ? { status: "Completed" } : { status: { $ne: "Completed" } };
+        const orders = await (await getCollection("customerOrders")).find(query).sort({ orderDate: -1 }).toArray();
         res.json(orders);
       });
     }
@@ -101,6 +116,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+
 // DELETE /orders/:id — Mark order as completed (protected)
 router.delete("/:id", authMiddleware, async (req, res, next) => {
   try {
@@ -110,13 +126,51 @@ router.delete("/:id", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid order ID" });
     }
 
-    const result = await (await getCollection("customerOrders")).deleteOne({ _id: new ObjectId(id) });
+    const result = await (await getCollection("customerOrders")).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status: "Completed", completedAt: new Date() } }
+    );
 
-    if (result.deletedCount === 0) {
+    if (result.matchedCount === 0) {
       return res.status(404).json({ message: "Order not found" });
     }
 
     res.json({ message: "Order completed" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /orders/:id/status — Update order status (protected)
+router.put("/:id/status", authMiddleware, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["Placed", "Preparing", "Ready", "Completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid order ID" });
+    }
+
+    const updateFields = { status };
+    if (status === "Completed") {
+      updateFields.completedAt = new Date();
+    }
+
+    const result = await (await getCollection("customerOrders")).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json({ message: `Order status updated to ${status}` });
   } catch (error) {
     next(error);
   }

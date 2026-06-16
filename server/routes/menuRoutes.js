@@ -18,7 +18,7 @@ router.get("/", async (req, res, next) => {
 // POST /menu — Add a new menu item (protected)
 router.post("/", authMiddleware, async (req, res, next) => {
   try {
-    const { name, cuisine, section, price, image, info } = req.body;
+    const { name, cuisine, section, price, image, info, available } = req.body;
 
     if (!name || !cuisine || !section || !price || !image || !info) {
       return res.status(400).json({ message: "All fields are required" });
@@ -35,7 +35,8 @@ router.post("/", authMiddleware, async (req, res, next) => {
       section: section.trim(),
       price: parsedPrice,
       image: image.trim(),
-      info: info.trim()
+      info: info.trim(),
+      available: available !== undefined ? Boolean(available) : true
     };
 
     const result = await (await getCollection("menuItems")).insertOne(newItem);
@@ -62,7 +63,7 @@ router.post("/check", async (req, res, next) => {
 router.put("/:id", authMiddleware, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, cuisine, section, price, image, info } = req.body;
+    const { name, cuisine, section, price, image, info, available } = req.body;
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid menu item ID" });
@@ -77,6 +78,8 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "Price must be a valid positive number" });
     }
 
+    const isAvailable = available !== undefined ? Boolean(available) : true;
+
     const result = await (await getCollection("menuItems")).updateOne(
       { _id: new ObjectId(id) },
       {
@@ -87,6 +90,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
           price: parsedPrice,
           image: image.trim(),
           info: info.trim(),
+          available: isAvailable,
         },
       }
     );
@@ -97,7 +101,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
 
     res.json({
       message: "Menu item updated successfully",
-      updatedItem: { _id: id, name, cuisine, section, price: parsedPrice, image, info }
+      updatedItem: { _id: id, name, cuisine, section, price: parsedPrice, image, info, available: isAvailable }
     });
   } catch (error) {
     next(error);
