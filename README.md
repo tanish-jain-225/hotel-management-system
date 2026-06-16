@@ -2,7 +2,7 @@
 
 DineEase is a full-stack hotel menu and order management monorepo built with React + Vite on the client, Node.js + Express on the server, MongoDB for persistence and a standalone seeder.
 
-**Docs:** [Client README](client/README.md) • [Server README](server/README.md) • [Setup Guide](docs/SETUP.md) • [Video Demo Script](docs/VIDEO_DEMO.md) • [Tester README](tester/README.md)
+**Docs:** [Client README](client/README.md) • [Server README](server/README.md) • [Setup Guide](docs/SETUP.md) • [Tester README](tester/README.md)
 
 ## What’s In This Repo
 
@@ -38,8 +38,8 @@ DineEase is a full-stack hotel menu and order management monorepo built with Rea
 - **Client:** React 19 + Vite + Tailwind + Framer Motion.
 - **Server:** Express 4 + MongoDB native driver + bcryptjs + JWT.
 - **Database:** MongoDB database named `hotelMenu`.
-- **Collections:** `adminCredentials`, `menuItems`, `orders`, `customerOrders`, `systemSettings`.
-- **Cart model:** The backend currently stores one document per cart unit; the UI groups duplicate items and shows quantity controls.
+- **Collections:** `adminCredentials`, `menuItems`, `cartItems` (holds temp shopping carts), `customerOrders` (finalized kitchen orders), `systemSettings`, `counters`.
+- **Cart model:** The backend currently stores one document per cart unit in the `cartItems` collection; the UI groups duplicate items and shows quantity controls. Automatic TTL cleanup purges abandoned cart items after 24 hours.
 
 ## Quick Start
 
@@ -146,7 +146,7 @@ Each menu document uses the schema below:
 ```
 
 ### `customerOrders`
-Orders store session-scoped customer data, grouped items, totals, GST, payment method and order status.
+Orders store session-scoped customer data, grouped items, totals, GST, payment method, order date, and order status (`Placed`, `Preparing`, `Ready`, `Completed`).
 
 ### `adminCredentials`
 Stores the admin username and bcrypt-hashed password.
@@ -167,13 +167,15 @@ See the route handlers in [server/routes](server/routes) for the full request/re
 - `GET /cart?sessionId=...` - fetch cart items for a session
 - `DELETE /cart/:id` - remove one cart item
 - `DELETE /cart/clear` - clear a session cart
-- `POST /orders` - place order
-- `GET /orders` - admin view of all orders, or session view with `sessionId`
-- `DELETE /orders/:id` - mark order as completed
+- `POST /orders` - place order (validates items and stock availability)
+- `GET /orders` - admin view of active orders, or session view with `sessionId`
+- `PUT /orders/:id/status` - update order status (`Placed` -> `Preparing` -> `Ready` -> `Completed`)
+- `DELETE /orders/:id` - mark order as completed (soft deletes by setting status to `Completed`)
 - `POST /admin/login` - admin login
 - `PUT /admin/credentials` - update admin credentials
 - `GET /admin/settings` - fetch GST/settings
 - `PUT /admin/settings` - update GST/settings
+- `GET /admin/analytics` - retrieve active count, today's served count, and today's total revenue
 
 ## Deployment
 
@@ -207,4 +209,3 @@ If you need to present the project, use [docs/VIDEO_DEMO.md](docs/VIDEO_DEMO.md)
 - [server/README.md](server/README.md)
 - [tester/README.md](tester/README.md)
 - [docs/SETUP.md](docs/SETUP.md)
-- [docs/VIDEO_DEMO.md](docs/VIDEO_DEMO.md)

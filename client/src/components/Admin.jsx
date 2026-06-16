@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { menuApi, settingsApi } from "../services/api";
+import { menuApi, settingsApi, adminApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { PlusCircle, Trash2, Search, Filter, ClipboardList, LayoutGrid, IndianRupee, Image as ImageIcon, UtensilsCrossed, Edit, XCircle, Percent } from "lucide-react";
+import { 
+  PlusCircle, Trash2, Search, Filter, ClipboardList, 
+  LayoutGrid, IndianRupee, Image as ImageIcon, 
+  UtensilsCrossed, Edit, XCircle, Percent 
+} from "lucide-react";
 
 const INITIAL_MENU_DATA = {
   name: "",
@@ -13,6 +17,7 @@ const INITIAL_MENU_DATA = {
   price: "",
   image: "",
   info: "",
+  available: true,
 };
 
 const Admin = () => {
@@ -34,6 +39,9 @@ const Admin = () => {
   // Settings States
   const [gstRateInput, setGstRateInput] = useState("5");
   const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Analytics State
+  const [analytics, setAnalytics] = useState({ activeOrders: 0, completedToday: 0, revenueToday: 0 });
 
   const fetchMenuItems = useCallback(async () => {
     setLoading(true);
@@ -57,10 +65,20 @@ const Admin = () => {
     }
   }, []);
 
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const data = await adminApi.getAnalytics();
+      setAnalytics(data);
+    } catch {
+      console.error("Failed to load analytics.");
+    }
+  }, []);
+
   useEffect(() => {
     fetchMenuItems();
     fetchSettings();
-  }, [fetchMenuItems, fetchSettings]);
+    fetchAnalytics();
+  }, [fetchMenuItems, fetchSettings, fetchAnalytics]);
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
@@ -75,6 +93,7 @@ const Admin = () => {
     try {
       await settingsApi.update({ gstRate: rate });
       toast.success("GST rate updated successfully! 🎉", { id: loadToast });
+      fetchAnalytics(); // Refresh analytics in case total shifts
     } catch (err) {
       toast.error(err.message || "Failed to update settings", { id: loadToast });
     } finally {
@@ -95,6 +114,7 @@ const Admin = () => {
       price: item.price,
       image: item.image,
       info: item.info || "",
+      available: item.available !== false,
     });
   };
 
@@ -106,13 +126,17 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const cleaned = Object.fromEntries(
-      Object.entries(menuData).map(([key, value]) =>
-        typeof value === "string" ? [key, value.trim()] : [key, value]
-      )
-    );
+    const cleaned = {
+      name: menuData.name.trim(),
+      cuisine: menuData.cuisine.trim(),
+      section: menuData.section.trim(),
+      price: parseFloat(menuData.price),
+      image: menuData.image.trim(),
+      info: menuData.info.trim(),
+      available: menuData.available !== false,
+    };
 
-    if (!cleaned.name || !cleaned.cuisine || !cleaned.section || !cleaned.image || isNaN(cleaned.price) || parseFloat(cleaned.price) <= 0) {
+    if (!cleaned.name || !cleaned.cuisine || !cleaned.section || !cleaned.image || isNaN(cleaned.price) || cleaned.price <= 0) {
       toast.error("All fields are required, and price must be a valid positive number.");
       return;
     }
@@ -122,14 +146,14 @@ const Admin = () => {
     setLoading(true);
     try {
       if (isEditing) {
-        const data = await menuApi.update(editingId, { ...cleaned, price: parseFloat(cleaned.price) });
+        const data = await menuApi.update(editingId, cleaned);
         toast.success("Menu item updated successfully!", { id: loadToast });
         const updated = data.updatedItem;
         setMenuItems((prev) => prev.map((item) => (item._id === editingId ? updated : item)));
         setFilteredItems((prev) => prev.map((item) => (item._id === editingId ? updated : item)));
         setEditingId(null);
       } else {
-        const data = await menuApi.add({ ...cleaned, price: parseFloat(cleaned.price) });
+        const data = await menuApi.add(cleaned);
         toast.success("Menu item added successfully!", { id: loadToast });
         const newItem = data.newItem;
         setMenuItems((prev) => [...prev, newItem]);
@@ -156,6 +180,31 @@ const Admin = () => {
       setFilteredItems((prev) => prev.filter((item) => item._id !== _id));
     } catch {
       toast.error("Failed to delete item.", { id: delToast });
+    }
+  };
+
+  const handleToggleAvailability = async (item) => {
+    const nextAvailable = item.available === false ? true : false;
+    const loadToast = toast.loading("Updating stock availability...");
+    try {
+      const updatedItem = {
+        name: item.name,
+        cuisine: item.cuisine,
+        section: item.section,
+        price: item.price,
+        image: item.image,
+        info: item.info || "",
+        available: nextAvailable
+      };
+      const data = await menuApi.update(item._id, updatedItem);
+      const updated = data.updatedItem;
+      
+      setMenuItems((prev) => prev.map((it) => (it._id === item._id ? updated : it)));
+      setFilteredItems((prev) => prev.map((it) => (it._id === item._id ? updated : it)));
+      
+      toast.success(`${item.name} is now ${nextAvailable ? "In Stock" : "Out of Stock"}!`, { id: loadToast });
+    } catch (err) {
+      toast.error(err.message || "Failed to update availability", { id: loadToast });
     }
   };
 
@@ -216,11 +265,53 @@ const Admin = () => {
         </div>
       </div>
 
+      {/* Analytics Dashboard Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <motion.div 
+          whileHover={{ y: -4 }}
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+        >
+          <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
+            <ClipboardList size={28} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Orders</p>
+            <h4 className="text-3xl font-black text-gray-900 mt-1">{analytics.activeOrders}</h4>
+          </div>
+        </motion.div>
+        
+        <motion.div 
+          whileHover={{ y: -4 }}
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+        >
+          <div className="p-4 bg-orange-50 text-orange-500 rounded-2xl">
+            <UtensilsCrossed size={28} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed Today</p>
+            <h4 className="text-3xl font-black text-gray-900 mt-1">{analytics.completedToday}</h4>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          whileHover={{ y: -4 }}
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+        >
+          <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
+            <IndianRupee size={28} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Today's Revenue</p>
+            <h4 className="text-3xl font-black text-emerald-600 mt-1">₹{analytics.revenueToday.toFixed(2)}</h4>
+          </div>
+        </motion.div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left Column: Form & Settings */}
         <div className="lg:col-span-1">
           <div className="flex flex-col gap-8 lg:sticky lg:top-28">
-            {/* Add New Item Form */}
+            {/* Add/Edit Form */}
             <motion.div 
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -302,6 +393,19 @@ const Admin = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-24 bg-white text-gray-800"
                   />
+                  <div className="flex items-center gap-2 px-1 py-1">
+                    <input
+                      type="checkbox"
+                      name="available"
+                      id="avail-checkbox"
+                      checked={menuData.available !== false}
+                      onChange={(e) => setMenuData({ ...menuData, available: e.target.checked })}
+                      className="w-4.5 h-4.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="avail-checkbox" className="text-sm font-semibold text-gray-600 cursor-pointer select-none">
+                      Item Available / In Stock
+                    </label>
+                  </div>
                 </div>
 
                 <motion.button
@@ -316,47 +420,47 @@ const Admin = () => {
               </form>
             </motion.div>
 
-            {/* GST Configuration Panel */}
+            {/* GST Config */}
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
               className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100"
             >
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Percent className="text-blue-600" size={20} /> GST Configuration
-            </h3>
-            <form onSubmit={handleSaveSettings} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">GST Rate (%)</label>
-                <div className="relative">
-                  <Percent className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="e.g. 5"
-                    value={gstRateInput}
-                    onChange={(e) => setGstRateInput(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
-                    required
-                  />
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <Percent className="text-blue-600" size={20} /> GST Configuration
+              </h3>
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">GST Rate (%)</label>
+                  <div className="relative">
+                    <Percent className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 5"
+                      value={gstRateInput}
+                      onChange={(e) => setGstRateInput(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={settingsLoading}
-                className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md hover:bg-blue-700 transition-all cursor-pointer"
-              >
-                {settingsLoading ? "Saving..." : "Save GST Rate"}
-              </motion.button>
-            </form>
-          </motion.div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={settingsLoading}
+                  className="w-full py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md hover:bg-blue-700 transition-all cursor-pointer"
+                >
+                  {settingsLoading ? "Saving..." : "Save GST Rate"}
+                </motion.button>
+              </form>
+            </motion.div>
+          </div>
         </div>
-      </div>
 
-        {/* Menu Items Management */}
+        {/* Menu Management */}
         <div className="lg:col-span-2 space-y-8">
           <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div className="relative grow">
@@ -413,9 +517,14 @@ const Admin = () => {
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           key={item._id}
-                          className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
+                          className={`flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group ${
+                            item.available === false ? "opacity-60 border-red-100" : ""
+                          }`}
                         >
-                          <div className="w-24 h-full">
+                          <div className="w-24 h-full relative">
+                            {item.available === false && (
+                              <div className="absolute inset-0 bg-red-600/10 z-10" />
+                            )}
                             <img
                               src={item.image || "https://via.placeholder.com/300"}
                               alt={item.name}
@@ -435,23 +544,44 @@ const Admin = () => {
                                 </p>
                               )}
                             </div>
-                            <div className="flex justify-end mt-2 gap-2">
-                              <motion.button
-                                whileHover={{ scale: 1.1, color: "#2563eb" }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => handleEditClick(item)}
-                                className="p-2 text-gray-300 hover:text-blue-600 transition-colors cursor-pointer"
-                              >
-                                <Edit size={18} />
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.1, color: "#ef4444" }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => handleDelete(item._id)}
-                                className="p-2 text-gray-300 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <Trash2 size={18} />
-                              </motion.button>
+                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-50">
+                              {/* Stock Toggler Checkbox */}
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="checkbox"
+                                  id={`avail-${item._id}`}
+                                  checked={item.available !== false}
+                                  onChange={() => handleToggleAvailability(item)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                />
+                                <label 
+                                  htmlFor={`avail-${item._id}`} 
+                                  className={`text-[10px] font-extrabold uppercase cursor-pointer select-none ${
+                                    item.available !== false ? "text-green-600" : "text-red-500"
+                                  }`}
+                                >
+                                  {item.available !== false ? "In Stock" : "Out of Stock"}
+                                </label>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.1, color: "#2563eb" }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => handleEditClick(item)}
+                                  className="p-1.5 text-gray-300 hover:text-blue-600 transition-colors cursor-pointer"
+                                >
+                                  <Edit size={18} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1, color: "#ef4444" }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => handleDelete(item._id)}
+                                  className="p-1.5 text-gray-300 hover:text-red-500 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 size={18} />
+                                </motion.button>
+                              </div>
                             </div>
                           </div>
                         </motion.div>

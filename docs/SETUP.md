@@ -85,11 +85,11 @@ The system uses a **Bcrypt Hashed Authentication** model for admin tasks:
 Categories are dynamically generated from the `section` field in your MongoDB items. To add a new category, simply add an item with a new section name.
 
 ### **Updating GST Rates**
-The GST rate is currently set at **5%**. You can modify this in `client/src/components/Cart.jsx` by changing the `GST_RATE` constant.
+The GST rate is dynamically stored in the database (`systemSettings` collection) and can be modified by the administrator directly via the **GST Configuration Panel** on the **Admin Dashboard** (`/admin`).
 
 ---
 
 ## 🆘 Troubleshooting
 - **401 Unauthorized**: Ensure your `JWT_SECRET` in `.env` matches the one being used by the server at startup.
 - **CORS Errors**: Verify that the `cors` middleware in `server/index.js` allows your frontend domain.
-- **Empty Menu**: Ensure your `MONGO_URI` is correct and you have seeded the `items` collection in the `hotelMenu` database.
+- **Empty Menu**: Ensure your `MONGO_URI` is correct and you have seeded the `menuItems` collection in the `hotelMenu` database.

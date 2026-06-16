@@ -18,6 +18,11 @@ async function request(endpoint, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    if (response.status === 401 && endpoint !== "/admin/login") {
+      localStorage.removeItem("isAuthenticated");
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
     throw new Error(data.message || `Request failed (${response.status})`);
   }
 
@@ -52,14 +57,22 @@ export const cartApi = {
 // Order API
 export const orderApi = {
   place: (orderData) => request("/orders", { method: "POST", body: JSON.stringify(orderData) }),
-  getAll: (sessionId) => request(`/orders${sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : ""}`),
+  getAll: (sessionId, status) => {
+    const params = [];
+    if (sessionId) params.push(`sessionId=${encodeURIComponent(sessionId)}`);
+    if (status) params.push(`status=${encodeURIComponent(status)}`);
+    const query = params.length ? `?${params.join("&")}` : "";
+    return request(`/orders${query}`);
+  },
   complete: (id) => request(`/orders/${id}`, { method: "DELETE" }),
+  updateStatus: (id, status) => request(`/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
 // Admin API
 export const adminApi = {
   login: (credentials) => request("/admin/login", { method: "POST", body: JSON.stringify(credentials) }),
   updateCredentials: (data) => request("/admin/credentials", { method: "PUT", body: JSON.stringify(data) }),
+  getAnalytics: () => request("/admin/analytics"),
 };
 
 // Settings API

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { menuApi, cartApi } from "../services/api";
 import { getSessionId } from "../utils/session";
@@ -19,7 +19,7 @@ const Menu = () => {
 
   const sessionId = getSessionId();
 
-  const fetchCartCount = async () => {
+  const fetchCartCount = useCallback(async () => {
     try {
       const data = await cartApi.getItems(sessionId);
       setCartCount(Array.isArray(data) ? data.length : 0);
@@ -39,7 +39,7 @@ const Menu = () => {
     } catch {
       setCartCount(0);
     }
-  };
+  }, [sessionId]);
 
   const handleAddToCart = async (item) => {
     try {
@@ -70,11 +70,11 @@ const Menu = () => {
 
   const handleDecrease = async (item) => {
     try {
-      // find a cart document id for this item
-      const entry = cartMap[item.name];
-      if (!entry || entry.ids.length === 0) return;
-      const idToRemove = entry.ids[entry.ids.length - 1];
-      await cartApi.removeItem(idToRemove, sessionId);
+      await cartApi.addItem({
+        sessionId,
+        name: item.name,
+        quantity: -1,
+      });
       await fetchCartCount();
       toast.success(`${item.name} quantity decreased`);
     } catch (err) {
@@ -96,7 +96,7 @@ const Menu = () => {
     };
     fetchMenu();
     fetchCartCount();
-  }, []);
+  }, [fetchCartCount]);
 
   const sections = useMemo(() => {
     const unique = {};
@@ -215,11 +215,18 @@ const Menu = () => {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       key={item._id}
-                      className="flex flex-col border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl transition-shadow overflow-hidden bg-white group"
+                      className={`flex flex-col border border-gray-100 rounded-2xl shadow-sm hover:shadow-xl transition-shadow overflow-hidden bg-white group ${
+                        item.available === false ? "opacity-60" : ""
+                      }`}
                     >
-                      <div className="w-full h-48 overflow-hidden">
+                      <div className="w-full h-48 overflow-hidden relative">
+                        {item.available === false && (
+                          <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center">
+                            <span className="bg-red-600 text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-md">Out of Stock</span>
+                          </div>
+                        )}
                         <motion.img
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={item.available !== false ? { scale: 1.1 } : {}}
                           transition={{ duration: 0.4 }}
                           src={item.image || "https://via.placeholder.com/300"}
                           alt={item.name}
@@ -236,7 +243,14 @@ const Menu = () => {
                         </div>
                         <div className="flex items-center justify-between mt-4">
                           <p className="text-2xl font-bold text-gray-900">₹{item.price}</p>
-                          {cartMap[item.name] && cartMap[item.name].quantity > 0 ? (
+                          {item.available === false ? (
+                            <button
+                              className="px-4 py-2 bg-gray-100 text-gray-400 rounded-xl font-semibold cursor-not-allowed shadow-none"
+                              disabled
+                            >
+                              Unavailable
+                            </button>
+                          ) : cartMap[item.name] && cartMap[item.name].quantity > 0 ? (
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleDecrease(item)}

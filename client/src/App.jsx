@@ -43,7 +43,11 @@ const App = () => {
               />
               <Route
                 path="/change-credentials"
-                element={<ChangeCredentials />}
+                element={
+                  <ProtectedRoute>
+                    <ChangeCredentials />
+                  </ProtectedRoute>
+                }
               />
               <Route path="/my-orders" element={<MyOrders />} />
             </Routes>

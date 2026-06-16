@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cartApi, orderApi, settingsApi } from "../services/api";
 import { getSessionId } from "../utils/session";
@@ -11,7 +11,6 @@ const GST_RATE = 0.05;
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({ name: "", contact: "", address: "" });
   const [showReceipt, setShowReceipt] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
@@ -20,17 +19,16 @@ const Cart = () => {
 
   const sessionId = getSessionId();
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = useCallback(async () => {
     try {
       const data = await cartApi.getItems(sessionId);
       setCartItems(data);
-    } catch (err) {
-      setError(err.message);
+    } catch {
       toast.error("Failed to load cart items");
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId]);
 
   useEffect(() => {
     fetchCartItems();
@@ -43,17 +41,7 @@ const Cart = () => {
       }
     };
     fetchGst();
-  }, []);
-
-  const handleRemoveFromCart = async (itemId, itemName) => {
-    try {
-      await cartApi.removeItem(itemId, sessionId);
-      toast.success(`${itemName} removed`);
-      fetchCartItems();
-    } catch (err) {
-      toast.error("Failed to remove item");
-    }
-  };
+  }, [fetchCartItems]);
 
   const handleIncrease = async (group) => {
     try {
@@ -75,10 +63,11 @@ const Cart = () => {
 
   const handleDecrease = async (group) => {
     try {
-      // remove one document corresponding to this grouped item
-      if (!group.ids || group.ids.length === 0) return;
-      const idToRemove = group.ids[group.ids.length - 1];
-      await cartApi.removeItem(idToRemove, sessionId);
+      await cartApi.addItem({
+        sessionId,
+        name: group.name,
+        quantity: -1,
+      });
       await fetchCartItems();
     } catch (err) {
       console.error(err);
@@ -88,14 +77,13 @@ const Cart = () => {
 
   const handleRemoveAll = async (group) => {
     try {
-      for (const id of group.ids.slice()) {
-        await cartApi.removeItem(id, sessionId);
-      }
+      if (!group.ids || group.ids.length === 0) return;
+      await cartApi.removeItem(group.ids[0], sessionId);
       toast.success(`${group.name} removed`);
       await fetchCartItems();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to remove item(s)");
+      toast.error("Failed to remove item");
     }
   };
 

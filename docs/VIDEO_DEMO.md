@@ -52,9 +52,9 @@ Action: Point to the add/edit form, search bar, and section filter in the dashbo
 
 ### 2:30-2:50 - Show order management and settings
 
-Say: "From the admin dashboard, I open Manage Orders. Active orders are listed with serial numbers, customer details, item breakdowns, and grand totals. The admin can print a receipt or mark an order as done to clear it from the queue."
+Say: "From the admin dashboard, I open Manage Orders. Active orders are listed with serial numbers, customer details, item breakdowns, and grand totals. The admin can print a receipt, start kitchen preparation, mark it as ready for pickup, or mark it as served/done to clear it from the active queue."
 
-Action: Open Manage Orders, show one order card, and click Mark as Done or Print Receipt.
+Action: Open Manage Orders, show one order card, and click the progress transition button (e.g. Start Preparing, Mark as Ready, or Mark as Served) or Print Receipt.
 
 Say: "The dashboard also includes GST settings, so pricing rules can be updated without changing the frontend."
 
@@ -85,7 +85,7 @@ Action: End on the admin dashboard or return to the home page.
 3. Land on the admin dashboard.
 4. Add a new menu item or edit an existing one.
 5. Open Manage Orders to view active customer orders.
-6. Print a receipt or mark an order as done.
+6. Print a receipt, start cooking, mark as ready, or mark as served to update its status in real-time.
 7. Optionally open Security Settings to change admin credentials.
 
 ## Presenter Notes
