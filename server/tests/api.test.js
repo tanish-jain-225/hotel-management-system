@@ -95,6 +95,16 @@ vi.mock("../config/database.js", () => {
     connectToDatabase: async () => ({}),
     getCollection: getCollectionMock,
     closeConnection: async () => ({}),
+    DB_NAME: "hotelMenu",
+    COLLECTIONS: {
+      adminCredentials: "adminCredentials",
+      menuItems: "menuItems",
+      orders: "orders",
+      customerOrders: "customerOrders",
+      systemSettings: "systemSettings",
+      cartItems: "cartItems",
+      counters: "counters"
+    },
     _mockDb: mockDb
   };
 });

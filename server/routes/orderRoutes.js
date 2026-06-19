@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-import { getCollection } from "../config/database.js";
+import { getCollection, COLLECTIONS } from "../config/database.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -14,7 +14,7 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "All order fields are required" });
     }
 
-    const menuCol = await getCollection("menuItems");
+    const menuCol = await getCollection(COLLECTIONS.menuItems);
     let calculatedSubtotal = 0;
     const verifiedItems = [];
 
@@ -49,7 +49,7 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    const settingsCol = await getCollection("systemSettings");
+    const settingsCol = await getCollection(COLLECTIONS.systemSettings);
     let settings = await settingsCol.findOne({ _id: "system_settings" });
     const gstRatePercent = settings && typeof settings.gstRate === "number" ? settings.gstRate : 5;
     const gstRateFraction = gstRatePercent / 100;
@@ -57,7 +57,7 @@ router.post("/", async (req, res, next) => {
     const gstAmount = calculatedSubtotal * gstRateFraction;
     const grandTotal = calculatedSubtotal + gstAmount;
 
-    const countersCol = await getCollection("counters");
+    const countersCol = await getCollection(COLLECTIONS.counters);
     const counter = await countersCol.findOneAndUpdate(
       { _id: "orderSerialNumber" },
       { $inc: { seq: 1 } },
@@ -78,7 +78,7 @@ router.post("/", async (req, res, next) => {
       status: "Placed" // Track live status
     };
 
-    const customerOrders = await getCollection("customerOrders");
+    const customerOrders = await getCollection(COLLECTIONS.customerOrders);
     const result = await customerOrders.insertOne(orderData);
     if (!result.acknowledged) throw new Error("Failed to place order");
 
@@ -97,19 +97,45 @@ router.post("/", async (req, res, next) => {
 router.get("/", async (req, res, next) => {
   try {
     const { sessionId } = req.query;
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     // If no sessionId, this is an admin request for ALL orders
     if (!sessionId) {
       return authMiddleware(req, res, async () => {
         const { status } = req.query;
-        const query = status === "Completed" ? { status: "Completed" } : { status: { $ne: "Completed" } };
-        const orders = await (await getCollection("customerOrders")).find(query).sort({ orderDate: -1 }).toArray();
+        let query;
+        if (status === "Completed") {
+          query = {
+            status: "Completed",
+            $or: [
+              { completedAt: { $gte: twentyFourHoursAgo } },
+              { completedAt: { $exists: false }, orderDate: { $gte: twentyFourHoursAgo } }
+            ]
+          };
+        } else {
+          query = { status: { $ne: "Completed" } };
+        }
+        const orders = await (await getCollection(COLLECTIONS.customerOrders)).find(query).sort({ orderDate: -1 }).toArray();
         res.json(orders);
       });
     }
 
     // Otherwise, fetch orders for specific session (customer)
-    const orders = await (await getCollection("customerOrders")).find({ sessionId }).sort({ orderDate: -1 }).toArray();
+    // Only return active orders, or completed orders from the last 24 hours
+    const query = {
+      sessionId,
+      $or: [
+        { status: { $ne: "Completed" } },
+        {
+          status: "Completed",
+          $or: [
+            { completedAt: { $gte: twentyFourHoursAgo } },
+            { completedAt: { $exists: false }, orderDate: { $gte: twentyFourHoursAgo } }
+          ]
+        }
+      ]
+    };
+    const orders = await (await getCollection(COLLECTIONS.customerOrders)).find(query).sort({ orderDate: -1 }).toArray();
     res.json(orders);
   } catch (error) {
     next(error);
@@ -126,7 +152,7 @@ router.delete("/:id", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid order ID" });
     }
 
-    const result = await (await getCollection("customerOrders")).updateOne(
+    const result = await (await getCollection(COLLECTIONS.customerOrders)).updateOne(
       { _id: new ObjectId(id) },
       { $set: { status: "Completed", completedAt: new Date() } }
     );
@@ -161,7 +187,7 @@ router.put("/:id/status", authMiddleware, async (req, res, next) => {
       updateFields.completedAt = new Date();
     }
 
-    const result = await (await getCollection("customerOrders")).updateOne(
+    const result = await (await getCollection(COLLECTIONS.customerOrders)).updateOne(
       { _id: new ObjectId(id) },
       { $set: updateFields }
     );

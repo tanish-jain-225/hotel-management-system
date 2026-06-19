@@ -35,9 +35,7 @@ function loadEnvFile(filePath) {
             value = value.slice(1, -1);
         }
 
-        if (!(key in process.env)) {
-            process.env[key] = value;
-        }
+        process.env[key] = value;
     }
 
     return true;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-import { getCollection } from "../config/database.js";
+import { getCollection, COLLECTIONS } from "../config/database.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -8,7 +8,7 @@ const router = Router();
 // GET /menu — Fetch all menu items
 router.get("/", async (req, res, next) => {
   try {
-    const items = await (await getCollection("menuItems")).find().toArray();
+    const items = await (await getCollection(COLLECTIONS.menuItems)).find().toArray();
     res.json(items);
   } catch (error) {
     next(error);
@@ -39,7 +39,7 @@ router.post("/", authMiddleware, async (req, res, next) => {
       available: available !== undefined ? Boolean(available) : true
     };
 
-    const result = await (await getCollection("menuItems")).insertOne(newItem);
+    const result = await (await getCollection(COLLECTIONS.menuItems)).insertOne(newItem);
     res.status(201).json({ message: "Menu item added successfully", newItem: { ...newItem, _id: result.insertedId } });
   } catch (error) {
     next(error);
@@ -52,7 +52,7 @@ router.post("/check", async (req, res, next) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ message: "Dish name is required" });
 
-    const existing = await (await getCollection("menuItems")).findOne({ name: name.trim() });
+    const existing = await (await getCollection(COLLECTIONS.menuItems)).findOne({ name: name.trim() });
     res.json({ exists: !!existing });
   } catch (error) {
     next(error);
@@ -80,7 +80,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
 
     const isAvailable = available !== undefined ? Boolean(available) : true;
 
-    const result = await (await getCollection("menuItems")).updateOne(
+    const result = await (await getCollection(COLLECTIONS.menuItems)).updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
@@ -117,7 +117,7 @@ router.delete("/:id", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid menu item ID" });
     }
 
-    const result = await (await getCollection("menuItems")).deleteOne({ _id: new ObjectId(id) });
+    const result = await (await getCollection(COLLECTIONS.menuItems)).deleteOne({ _id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Menu item not found" });

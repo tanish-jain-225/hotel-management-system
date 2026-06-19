@@ -139,6 +139,17 @@ const MyOrders = () => {
       </div>
 
       <AnimatePresence mode="popLayout">
+        {showHistory && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-2xl text-sm font-semibold flex items-center gap-2.5"
+          >
+            <Clock size={18} className="text-blue-600 flex-shrink-0" />
+            <span>Note: Completed orders are automatically removed from your history after 24 hours.</span>
+          </motion.div>
+        )}
         {filteredOrders.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0 }}

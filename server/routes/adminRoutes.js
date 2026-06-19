@@ -1,7 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { getCollection } from "../config/database.js";
+import { getCollection, COLLECTIONS } from "../config/database.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -15,11 +15,20 @@ router.post("/login", async (req, res, next) => {
       return res.status(400).json({ message: "Username and password are required" });
     }
 
-    const adminCol = await getCollection("adminCredentials");
-    const admin = await adminCol.findOne();
+    const adminCol = await getCollection(COLLECTIONS.adminCredentials);
+    let admin = await adminCol.findOne();
 
     if (!admin) {
-      return res.status(404).json({ message: "Admin credentials not configured" });
+      // Seed default credentials on-the-fly
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash("123456", salt);
+      admin = {
+        username: "admin",
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await adminCol.insertOne(admin);
     }
 
     // Verify Password with Bcrypt
@@ -57,7 +66,7 @@ router.put("/credentials", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "New password must be at least 6 characters long" });
     }
 
-    const credentialsCol = await getCollection("adminCredentials");
+    const credentialsCol = await getCollection(COLLECTIONS.adminCredentials);
     const admin = await credentialsCol.findOne();
 
     if (!admin) {
@@ -89,7 +98,7 @@ router.put("/credentials", authMiddleware, async (req, res, next) => {
 // GET /admin/settings — Get system settings (like GST rate)
 router.get("/settings", async (req, res, next) => {
   try {
-    const settingsCol = await getCollection("systemSettings");
+    const settingsCol = await getCollection(COLLECTIONS.systemSettings);
     let settings = await settingsCol.findOne({ _id: "system_settings" });
 
     // Seed default settings if empty
@@ -114,7 +123,7 @@ router.put("/settings", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "GST rate must be a valid percentage between 0 and 100" });
     }
 
-    const settingsCol = await getCollection("systemSettings");
+    const settingsCol = await getCollection(COLLECTIONS.systemSettings);
     await settingsCol.updateOne(
       { _id: "system_settings" },
       { $set: { gstRate: parsedGst } },
@@ -130,29 +139,27 @@ router.put("/settings", authMiddleware, async (req, res, next) => {
 // GET /admin/analytics — Retrieve dashboard analytics (protected)
 router.get("/analytics", authMiddleware, async (req, res, next) => {
   try {
-    const ordersCol = await getCollection("customerOrders");
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    const ordersCol = await getCollection(COLLECTIONS.customerOrders);
 
     const activeOrdersCount = await ordersCol.countDocuments({ status: { $ne: "Completed" } });
 
-    const completedTodayQuery = {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const completed24hQuery = {
       status: "Completed",
-      orderDate: { $gte: startOfToday, $lte: endOfToday }
+      $or: [
+        { completedAt: { $gte: twentyFourHoursAgo } },
+        { completedAt: { $exists: false }, orderDate: { $gte: twentyFourHoursAgo } }
+      ]
     };
-    const completedTodayCount = await ordersCol.countDocuments(completedTodayQuery);
 
-    const completedTodayOrders = await ordersCol.find(completedTodayQuery).toArray();
-    const revenueToday = completedTodayOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+    const completed24hCount = await ordersCol.countDocuments(completed24hQuery);
+    const completed24hOrders = await ordersCol.find(completed24hQuery).toArray();
+    const revenue24h = completed24hOrders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
 
     res.json({
       activeOrders: activeOrdersCount,
-      completedToday: completedTodayCount,
-      revenueToday: parseFloat(revenueToday.toFixed(2))
+      completedToday: completed24hCount,
+      revenueToday: parseFloat(revenue24h.toFixed(2))
     });
   } catch (error) {
     next(error);

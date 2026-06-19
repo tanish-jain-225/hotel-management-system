@@ -2,13 +2,15 @@ import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 
 const MONGO_URI = process.env.MONGO_URI;
-const DB_NAME = "hotelMenu";
-const COLLECTIONS = {
+export const DB_NAME = "hotelMenu";
+export const COLLECTIONS = {
   adminCredentials: "adminCredentials",
   menuItems: "menuItems",
   orders: "orders",
   customerOrders: "customerOrders",
   systemSettings: "systemSettings",
+  cartItems: "cartItems",
+  counters: "counters"
 };
 
 let client;
@@ -81,11 +83,11 @@ export async function connectToDatabase() {
 
         // Ensure TTL index on cartItems collection
         try {
-          const cartCol = db.collection("cartItems");
+          const cartCol = db.collection(COLLECTIONS.cartItems);
           await cartCol.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
-          console.log("Ensured TTL index on cartItems collection");
+          console.log(`Ensured TTL index on ${COLLECTIONS.cartItems} collection`);
         } catch (idxError) {
-          console.error("Error creating TTL index on cartItems:", idxError);
+          console.error(`Error creating TTL index on ${COLLECTIONS.cartItems}:`, idxError);
         }
 
         return db;

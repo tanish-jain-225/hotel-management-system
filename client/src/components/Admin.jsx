@@ -266,10 +266,10 @@ const Admin = () => {
       </div>
 
       {/* Analytics Dashboard Panel */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="flex flex-col md:flex-row gap-6 mb-3">
         <motion.div 
           whileHover={{ y: -4 }}
-          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300 flex-1 w-full"
         >
           <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
             <ClipboardList size={28} />
@@ -282,35 +282,38 @@ const Admin = () => {
         
         <motion.div 
           whileHover={{ y: -4 }}
-          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300 flex-1 w-full"
         >
           <div className="p-4 bg-orange-50 text-orange-500 rounded-2xl">
             <UtensilsCrossed size={28} />
           </div>
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed Today</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed (24h)</p>
             <h4 className="text-3xl font-black text-gray-900 mt-1">{analytics.completedToday}</h4>
           </div>
         </motion.div>
 
         <motion.div 
           whileHover={{ y: -4 }}
-          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300"
+          className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5 transition-shadow duration-300 flex-1 w-full"
         >
           <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
             <IndianRupee size={28} />
           </div>
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Today's Revenue</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Revenue (24h)</p>
             <h4 className="text-3xl font-black text-emerald-600 mt-1">₹{analytics.revenueToday.toFixed(2)}</h4>
           </div>
         </motion.div>
       </div>
+      <div className="text-left md:text-right text-xs font-bold text-gray-400 italic mb-12 ml-2 md:mr-2">
+        * Metrics reflect a rolling 24-hour window irrespective of timezone. Completed orders automatically clear after 24 hours.
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="flex flex-col lg:flex-row gap-10">
         {/* Left Column: Form & Settings */}
-        <div className="lg:col-span-1">
-          <div className="flex flex-col gap-8 lg:sticky lg:top-28">
+        <div className="w-full lg:w-1/3">
+          <div className="flex flex-col gap-8">
             {/* Add/Edit Form */}
             <motion.div 
               initial={{ x: -20, opacity: 0 }}
@@ -345,14 +348,14 @@ const Admin = () => {
                       className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <input
                       type="text"
                       name="cuisine"
                       placeholder="Cuisine"
                       value={menuData.cuisine}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                      className="flex-1 w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
                     />
                     <input
                       type="text"
@@ -360,7 +363,7 @@ const Admin = () => {
                       placeholder="Section"
                       value={menuData.section}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
+                      className="flex-1 w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
                     />
                   </div>
                   <div className="relative">
@@ -461,7 +464,7 @@ const Admin = () => {
         </div>
 
         {/* Menu Management */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="w-full lg:w-2/3 space-y-8">
           <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div className="relative grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -510,18 +513,18 @@ const Admin = () => {
                       <LayoutGrid className="text-blue-600" size={20} />
                       {section}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col md:flex-row flex-wrap gap-6">
                       {items.map((item) => (
                         <motion.div
                           layout
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           key={item._id}
-                          className={`flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group ${
+                          className={`flex w-full md:w-[calc(50%-0.75rem)] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all group ${
                             item.available === false ? "opacity-60 border-red-100" : ""
                           }`}
                         >
-                          <div className="w-24 h-full relative">
+                          <div className="w-24 flex-shrink-0 relative">
                             {item.available === false && (
                               <div className="absolute inset-0 bg-red-600/10 z-10" />
                             )}

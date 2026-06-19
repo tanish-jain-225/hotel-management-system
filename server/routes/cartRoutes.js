@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-import { getCollection } from "../config/database.js";
+import { getCollection, COLLECTIONS } from "../config/database.js";
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "Quantity must be a valid integer" });
     }
 
-    const ordersCol = await getCollection("cartItems");
+    const ordersCol = await getCollection(COLLECTIONS.cartItems);
 
     // Check if item already exists in cart for this session
     const existingItem = await ordersCol.findOne({ sessionId, name: name.trim() });
@@ -42,7 +42,7 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "Cannot add new item with zero or negative quantity" });
     }
 
-    const menuCol = await getCollection("menuItems");
+    const menuCol = await getCollection(COLLECTIONS.menuItems);
     const dbItem = await menuCol.findOne({ name: name.trim() });
 
     if (!dbItem) {
@@ -78,7 +78,7 @@ router.get("/", async (req, res, next) => {
     const { sessionId } = req.query;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    const items = await (await getCollection("cartItems")).find({ sessionId }).toArray();
+    const items = await (await getCollection(COLLECTIONS.cartItems)).find({ sessionId }).toArray();
     res.json(items);
   } catch (error) {
     next(error);
@@ -91,7 +91,7 @@ router.delete("/clear", async (req, res, next) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).json({ message: "Session ID is required" });
 
-    await (await getCollection("cartItems")).deleteMany({ sessionId });
+    await (await getCollection(COLLECTIONS.cartItems)).deleteMany({ sessionId });
     res.json({ message: "Cart cleared successfully" });
   } catch (error) {
     next(error);
@@ -108,7 +108,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Valid session ID and item ID are required" });
     }
 
-    const result = await (await getCollection("cartItems")).deleteOne({
+    const result = await (await getCollection(COLLECTIONS.cartItems)).deleteOne({
       _id: new ObjectId(id),
       sessionId,
     });
