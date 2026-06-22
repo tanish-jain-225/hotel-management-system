@@ -1,96 +1,138 @@
-# DineEase Video Demo Walkthrough
+# Project Demo Script Plan
 
-Use this as a single 3-minute narration that includes the exact action to take on screen at each step.
+Duration: 2-3 minutes
 
-## Demo Goal
+Goal: deliver a winning, high-clarity walkthrough of the complete project flow with visible proof.
 
-Show the end-to-end experience of DineEase:
-- customers browse the menu and place an order
-- the app calculates totals with GST
-- admins log in, manage menu items, and process orders
-- users can track their own order status
+Last validated against current build: June 22, 2026
 
-## 3-Minute Walkthrough
+## Winning Structure
 
-### 0:00-0:20 - Open the app and introduce the product
+1. Hook the problem quickly.
+2. Show live menu search, filtering, and add-to-cart in action.
+3. Show session-based cart checkout and dynamic GST calculations.
+4. Prove kitchen order processing, audio alerts, and receipt printing.
+5. Close with deployment and impact.
 
-Say: "This is DineEase, a full-stack hotel menu and order management system built with React, Vite, Node.js, Express, and MongoDB. It brings together the customer experience and the admin workflow in one platform."
+## Full Recording Script (DineEase)
 
-Action: Open the home page on the menu screen and keep the hero/menu section visible.
+### 0:00-0:10 | Problem Hook
 
-### 0:20-0:55 - Show browsing and filtering
+Screen action:
+- Open the menu page hero section.
 
-Say: "On the home page, users can search dishes, filter by section, and browse a live menu grouped by category. Each item shows the cuisine, price, and description, so discovery is fast and clear."
+Say:
+- "Traditional restaurant ordering processes suffer from slow queues, manual bill errors, and disconnected menus. DineEase solves this with a secure, session-aware menu and live kitchen management system."
 
-Action: Type a search term, change the section filter, and then click Add To Cart on one or two items.
+### 0:10-0:25 | Product and Roles
 
-Say: "When a customer adds an item, DineEase stores it against a session ID so the cart stays linked to that user session."
+Screen action:
+- Keep the categories filter bar and first few menu items visible.
 
-### 0:55-1:25 - Show cart totals and checkout
+Say:
+- "The platform seamlessly connects the customer browsing experience with real-time backend kitchen workflows, syncing shopping cart actions and order history under a unified MongoDB architecture."
 
-Say: "Now I open the cart. The app groups duplicate items, shows quantity, and calculates subtotal, GST, and grand total automatically. The GST rate comes from backend settings, so it can be controlled centrally."
+### 0:25-0:35 | Customer Menu Selection
 
-Action: Open the cart, point to the grouped items and totals, then fill in name, contact number, and table or address.
+Screen action:
+- Filter by a category (e.g., select a cuisine option).
+- Type a dish name into the search bar.
+- Click Add To Cart on one or two items to show the toast notifications and quantity controls.
 
-Say: "After confirming the order, DineEase creates the customer order, assigns a serial number, and shows a receipt modal with the final bill."
+Say:
+- "Customers can instantly filter by category, search the menu, and add items. The cart persists matching their session ID, ensuring their choices are stored securely."
 
-### 1:25-1:55 - Show order tracking
+### 0:35-1:10 | Cart and Checkout Totals
 
-Say: "The customer can then move to My Orders to see all orders from the current session. This screen shows the serial number, items, payment method, totals, and the current order status."
+Screen action:
+- Click the cart icon to navigate to the Cart page.
+- Point to the subtotal, GST percentage, and grand total.
+- Fill out the checkout form with customer name, contact number, and table number.
+- Click Confirm Order to place it and show the Receipt modal.
 
-Action: Navigate to My Orders and highlight the order card and status area.
+Say:
+- "In the cart, duplicate items are grouped, showing a breakdown of pricing. The system calculates subtotal, GST based on dynamic server settings, and the grand total. After entering customer details, we generate a secure order receipt."
 
-### 1:55-2:30 - Switch to admin login and dashboard
+### 1:10-1:25 | Live Order Status Tracking
 
-Say: "Next, I switch to the admin side. The login screen verifies credentials with bcrypt and returns a JWT for protected access."
+Screen action:
+- Click Track My Order Status in the receipt modal to navigate to the My Orders page.
+- Highlight the active stepper showing the order status as Placed.
 
-Action: Open Login, enter admin credentials, and sign in.
+Say:
+- "Once placed, the order goes to the tracker page. It uses auto-polling to update the stepper instantly as the kitchen works, from Placed to Served."
 
-Say: "Once logged in, the admin dashboard lets staff add, edit, search, and delete menu items. This is where menu data stays current, including dish name, cuisine, section, price, image, and description."
+### 1:25-1:55 | Admin Dashboard & Analytics
 
-Action: Point to the add/edit form, search bar, and section filter in the dashboard.
+Screen action:
+- Navigate to the login page and sign in as admin.
+- Point at the analytics metrics: Active Orders, Completed (24h), and Revenue (24h).
+- Modify the GST rate in the GST Configuration panel and click Save.
 
-### 2:30-2:50 - Show order management and settings
+Say:
+- "Now we switch to the admin dashboard, protected by JWT access. The metrics panel displays active orders, completed counts, and total revenue. Let's update our GST rate here; it immediately modifies checkout calculations frontend-wide."
 
-Say: "From the admin dashboard, I open Manage Orders. Active orders are listed with serial numbers, customer details, item breakdowns, and grand totals. The admin can print a receipt, start kitchen preparation, mark it as ready for pickup, or mark it as served/done to clear it from the active queue."
+### 1:55-2:20 | Menu Stock Control
 
-Action: Open Manage Orders, show one order card, and click the progress transition button (e.g. Start Preparing, Mark as Ready, or Mark as Served) or Print Receipt.
+Screen action:
+- Scroll down to the menu item management area.
+- Click the checkmark to toggle stock availability for an item (e.g., set to Out of Stock).
+- Click edit on an item, change its price, and save.
 
-Say: "The dashboard also includes GST settings, so pricing rules can be updated without changing the frontend."
+Say:
+- "Staff can manage the live menu, edit pricing, or toggle stock availability instantly. Out-of-stock items update on the customer menu page in real-time, preventing incorrect orders."
 
-Action: Briefly show the GST settings area or explain where it appears in the dashboard.
+### 2:20-2:35 | Kitchen Governance & Print
 
-### 2:50-3:00 - Close the demo
+Screen action:
+- Navigate to Manage Orders.
+- Show the new customer order card.
+- Click Start Preparing, click Print Receipt (canceling the browser print window), and then click Mark as Served.
 
-Say: "DineEase combines a polished customer experience with a practical admin workflow, making it a complete restaurant operations demo built for real-world use."
+Say:
+- "In Manage Orders, active orders show in a live kitchen feed. When a new order arrives, a Web Audio chime sounds automatically. We can print receipts for kitchen staff, and transition statuses until the order is served."
 
-Action: End on the admin dashboard or return to the home page.
+### 2:35-2:50 | Deployment and Impact Close
 
-## One-Page User Flow
+Screen action:
+- Show the repository structure or deployed configuration links.
 
-### Customer Flow
+Say:
+- "DineEase is deployed with React + Vite on the frontend and Express + Node.js on Vercel, fully integrated with MongoDB. It makes dining operations faster, error-free, and simpler to govern."
 
-1. Open the home page.
-2. Search or filter menu items by section.
-3. Add one or more dishes to the cart.
-4. Open the cart and review grouped items.
-5. Fill in name, contact, and table/address.
-6. Confirm the order and show the receipt modal.
-7. Navigate to My Orders to show order tracking.
+## Backup Branch (If AI or Network Is Slow)
 
-### Admin Flow
+If database operations or the server response is slow, say this and continue:
 
-1. Open the login page.
-2. Sign in with admin credentials.
-3. Land on the admin dashboard.
-4. Add a new menu item or edit an existing one.
-5. Open Manage Orders to view active customer orders.
-6. Print a receipt, start cooking, mark as ready, or mark as served to update its status in real-time.
-7. Optionally open Security Settings to change admin credentials.
+- "The order submission is processing. In parallel, here is a pre-existing active order on our tracker screen showing the exact stepper layout and kitchen feed verification."
+- "The platform utilizes asynchronous polling and error boundaries so the user state remains fully persistent."
 
-## Presenter Notes
+Then jump directly to the Admin Dashboard section.
 
-- Keep the cursor movement slow and deliberate.
-- Pause briefly after each major action so the UI is readable.
-- Use seeded sample menu items and at least one existing order if possible.
-- Highlight the backend-driven parts: session-based cart, GST calculation, JWT admin login, and order completion.
+## On-Screen Sequence Checklist
+
+1. Landing menu and hero visible.
+2. Menu filtering and search shown.
+3. Cart item grouping and GST calculation pointed out.
+4. Receipt modal with serial number shown.
+5. My Orders stepper tracker displayed.
+6. Admin authentication and analytics panel visible.
+7. GST rate configuration update shown.
+8. Menu item edit and stock toggling demonstrated.
+9. Kitchen orders page with state progression and print view shown.
+
+## Delivery Tips for Higher Score
+
+1. Keep cursor movement deliberate and minimal.
+2. Never wait silently during server/network calls; narrate database persistence and status polling.
+3. Use one concrete dish example from search to saved order.
+4. Use "session-aware" wording, not absolute offline claims.
+5. End with measurable value: speed, governance, and revenue metrics.
+
+## Pre-Recording Setup
+
+1. Keep one browser tab open for customer menu and another for admin dashboard.
+2. Keep the seeder database initialized with standard items.
+3. Prepare a test client session to avoid empty carts.
+4. Confirm server is running locally and printing layouts render cleanly.
+5. Record at readable zoom and consistent resolution.
