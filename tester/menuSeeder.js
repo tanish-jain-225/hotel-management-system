@@ -84,7 +84,7 @@ const menuItems = [
         section: "Soups",
         price: 159,
         image: "https://images.unsplash.com/photo-1547592180-6047a3c5d6d1?auto=format&fit=crop&w=900&q=80",
-        info: "Hot and savoury soup with vegetables, garlic, and crispy noodles.",
+        info: "Hot and savoury soup with vegetables, garlic and crispy noodles.",
     },
     {
         name: "Hot & Sour Soup",
@@ -116,7 +116,7 @@ const menuItems = [
         section: "Main Course",
         price: 219,
         image: "https://images.unsplash.com/photo-1626508035297-45c3c9877de0?auto=format&fit=crop&w=900&q=80",
-        info: "Yellow lentils tempered with cumin, garlic, and ghee.",
+        info: "Yellow lentils tempered with cumin, garlic and ghee.",
     },
     {
         name: "Veg Kofta Curry",
@@ -140,7 +140,7 @@ const menuItems = [
         section: "Biryani",
         price: 279,
         image: "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?auto=format&fit=crop&w=900&q=80",
-        info: "Aromatic rice cooked with vegetables, herbs, and whole spices.",
+        info: "Aromatic rice cooked with vegetables, herbs and whole spices.",
     },
     {
         name: "Mutton Biryani",
@@ -156,7 +156,7 @@ const menuItems = [
         section: "Chinese",
         price: 239,
         image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
-        info: "Stir-fried noodles tossed with vegetables, soy, and garlic.",
+        info: "Stir-fried noodles tossed with vegetables, soy and garlic.",
     },
     {
         name: "Veg Manchurian",
@@ -172,7 +172,7 @@ const menuItems = [
         section: "Chinese",
         price: 319,
         image: "https://images.unsplash.com/photo-1604908176997-125f25cc500f?auto=format&fit=crop&w=900&q=80",
-        info: "A spicy stir-fried chicken dish with peppers, garlic, and soy glaze.",
+        info: "A spicy stir-fried chicken dish with peppers, garlic and soy glaze.",
     },
     {
         name: "Masala Dosa",
@@ -196,7 +196,7 @@ const menuItems = [
         section: "South Indian",
         price: 189,
         image: "https://images.unsplash.com/photo-1617622141664-bb564f22f8ae?auto=format&fit=crop&w=900&q=80",
-        info: "Thick rice pancake topped with onions, tomatoes, and herbs.",
+        info: "Thick rice pancake topped with onions, tomatoes and herbs.",
     },
     {
         name: "Cold Coffee",

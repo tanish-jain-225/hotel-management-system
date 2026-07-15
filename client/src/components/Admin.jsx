@@ -137,7 +137,7 @@ const Admin = () => {
     };
 
     if (!cleaned.name || !cleaned.cuisine || !cleaned.section || !cleaned.image || isNaN(cleaned.price) || cleaned.price <= 0) {
-      toast.error("All fields are required, and price must be a valid positive number.");
+      toast.error("All fields are required and price must be a valid positive number.");
       return;
     }
 

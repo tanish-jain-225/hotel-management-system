@@ -3,7 +3,7 @@
 This directory contains the backend API for the DineEase hotel/restaurant management system.
 
 ## Overview
-- Minimal Express.js API providing menu, cart, orders, and admin endpoints.
+- Minimal Express.js API providing menu, cart, orders and admin endpoints.
 - Uses MongoDB for persistence and JWT for authentication.
 - Designed to run locally and on Vercel (the app export is used for serverless deployments).
 
@@ -70,5 +70,5 @@ GET `/` — returns `{ status: "Server is healthy" }`.
 - For Vercel serverless deployments the exported `app` from `index.js` is used directly; ensure environment variables are configured in your deployment settings.
 
 ## Notes
-- The app uses `helmet`, `cors`, and `express.json()` middleware by default.
+- The app uses `helmet`, `cors` and `express.json()` middleware by default.
 - On shutdown (SIGINT) the server attempts to close the MongoDB connection gracefully.

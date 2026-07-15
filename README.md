@@ -146,7 +146,7 @@ Each menu document uses the schema below:
 ```
 
 ### `customerOrders`
-Orders store session-scoped customer data, grouped items, totals, GST, payment method, order date, and order status (`Placed`, `Preparing`, `Ready`, `Completed`).
+Orders store session-scoped customer data, grouped items, totals, GST, payment method, order date and order status (`Placed`, `Preparing`, `Ready`, `Completed`).
 
 ### `adminCredentials`
 Stores the admin username and bcrypt-hashed password.
@@ -175,7 +175,7 @@ See the route handlers in [server/routes](server/routes) for the full request/re
 - `PUT /admin/credentials` - update admin credentials
 - `GET /admin/settings` - fetch GST/settings
 - `PUT /admin/settings` - update GST/settings
-- `GET /admin/analytics` - retrieve active count, today's served count, and today's total revenue
+- `GET /admin/analytics` - retrieve active count, today's served count and today's total revenue
 
 ## Deployment
 

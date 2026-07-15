@@ -10,7 +10,7 @@ router.post("/", async (req, res, next) => {
     const { sessionId, name, quantity } = req.body;
 
     if (!sessionId || !name || quantity === undefined) {
-      return res.status(400).json({ message: "Session ID, name, and quantity are required" });
+      return res.status(400).json({ message: "Session ID, name and quantity are required" });
     }
 
     const parsedQty = parseInt(quantity);
