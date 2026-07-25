@@ -37,12 +37,25 @@ const MyOrders = () => {
     fetchOrders();
 
     if (!showHistory) {
-      // Set up auto-polling every 10 seconds for real-time tracking
+      // Set up auto-polling every 10 seconds for real-time tracking (paused when tab is hidden)
       const pollInterval = setInterval(() => {
-        fetchOrders();
+        if (!document.hidden) {
+          fetchOrders();
+        }
       }, 10000);
 
-      return () => clearInterval(pollInterval);
+      const handleVisibility = () => {
+        if (!document.hidden) {
+          fetchOrders();
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibility);
+
+      return () => {
+        clearInterval(pollInterval);
+        document.removeEventListener("visibilitychange", handleVisibility);
+      };
     }
   }, [fetchOrders, showHistory]);
 

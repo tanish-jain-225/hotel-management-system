@@ -148,9 +148,18 @@ const Menu = () => {
       </div>
 
       {loading && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-lg text-gray-600 font-medium">Preparing the delicacies...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-10">
+          {[1, 2, 3, 4, 5, 6].map((idx) => (
+            <div key={idx} className="border border-gray-100 rounded-2xl p-4 bg-white shadow-sm animate-pulse space-y-4">
+              <div className="w-full h-48 bg-gray-200 rounded-xl"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full"></div>
+              <div className="flex justify-between items-center pt-2">
+                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-200 rounded-lg w-1/3"></div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
       {error && <p className="text-center text-red-500 font-bold bg-red-100 p-4 rounded-lg">{error}</p>}
@@ -160,7 +169,10 @@ const Menu = () => {
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
+              id="search-food"
+              name="search"
               type="text"
+              autoComplete="off"
               placeholder="Search For Food"
               className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
               value={searchTerm}
@@ -170,6 +182,9 @@ const Menu = () => {
           <div className="relative w-full">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <select
+              id="select-section"
+              name="section"
+              autoComplete="off"
               className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none capitalize cursor-pointer bg-white appearance-none"
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
@@ -228,8 +243,13 @@ const Menu = () => {
                         <motion.img
                           whileHover={item.available !== false ? { scale: 1.1 } : {}}
                           transition={{ duration: 0.4 }}
-                          src={item.image || "https://via.placeholder.com/300"}
+                          src={item.image || "/8575289.png"}
                           alt={item.name}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/8575289.png";
+                          }}
                           className="object-cover w-full h-full"
                         />
                       </div>

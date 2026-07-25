@@ -67,7 +67,7 @@ const menuItems = [
         cuisine: "Asian",
         section: "Starters",
         price: 199,
-        image: "https://images.unsplash.com/photo-1541014741259-de529411b96e?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800",
         info: "Golden-fried rolls stuffed with vegetables and served with dipping sauce.",
     },
     {
@@ -75,7 +75,7 @@ const menuItems = [
         cuisine: "Continental",
         section: "Soups",
         price: 149,
-        image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800",
         info: "Smooth tomato soup finished with cream and herbs.",
     },
     {
@@ -83,7 +83,7 @@ const menuItems = [
         cuisine: "Indo-Chinese",
         section: "Soups",
         price: 159,
-        image: "https://images.unsplash.com/photo-1547592180-6047a3c5d6d1?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800",
         info: "Hot and savoury soup with vegetables, garlic and crispy noodles.",
     },
     {
@@ -91,7 +91,7 @@ const menuItems = [
         cuisine: "Indo-Chinese",
         section: "Soups",
         price: 169,
-        image: "https://images.unsplash.com/photo-1547592180-39fbc3d1b1f3?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=800",
         info: "A balanced bowl of tangy, spicy broth with vegetables and mushrooms.",
     },
     {
@@ -99,7 +99,7 @@ const menuItems = [
         cuisine: "North Indian",
         section: "Main Course",
         price: 399,
-        image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800",
         info: "Classic creamy tomato-based chicken curry served with rich spices.",
     },
     {
@@ -107,7 +107,7 @@ const menuItems = [
         cuisine: "North Indian",
         section: "Main Course",
         price: 369,
-        image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800",
         info: "Paneer cubes simmered in a smoky onion-tomato gravy.",
     },
     {
@@ -115,7 +115,7 @@ const menuItems = [
         cuisine: "North Indian",
         section: "Main Course",
         price: 219,
-        image: "https://images.unsplash.com/photo-1626508035297-45c3c9877de0?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800",
         info: "Yellow lentils tempered with cumin, garlic and ghee.",
     },
     {
@@ -123,7 +123,7 @@ const menuItems = [
         cuisine: "North Indian",
         section: "Main Course",
         price: 329,
-        image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=800",
         info: "Vegetable dumplings in a smooth, mildly spiced gravy.",
     },
     {
@@ -131,7 +131,7 @@ const menuItems = [
         cuisine: "Hyderabadi",
         section: "Biryani",
         price: 349,
-        image: "https://images.unsplash.com/photo-1563379091339-03246963d595?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800",
         info: "Fragrant basmati rice layered with marinated chicken and saffron spices.",
     },
     {
@@ -139,7 +139,7 @@ const menuItems = [
         cuisine: "Hyderabadi",
         section: "Biryani",
         price: 279,
-        image: "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?w=800",
         info: "Aromatic rice cooked with vegetables, herbs and whole spices.",
     },
     {
@@ -147,7 +147,7 @@ const menuItems = [
         cuisine: "Hyderabadi",
         section: "Biryani",
         price: 449,
-        image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800",
         info: "Slow-cooked mutton layered with spiced rice for a premium main dish.",
     },
     {
@@ -155,7 +155,7 @@ const menuItems = [
         cuisine: "Indo-Chinese",
         section: "Chinese",
         price: 239,
-        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800",
         info: "Stir-fried noodles tossed with vegetables, soy and garlic.",
     },
     {
@@ -163,7 +163,7 @@ const menuItems = [
         cuisine: "Indo-Chinese",
         section: "Chinese",
         price: 259,
-        image: "https://images.unsplash.com/photo-1625937329934-5e9a2d2e30f7?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800",
         info: "Crispy vegetable balls served in a savoury manchurian sauce.",
     },
     {
@@ -171,7 +171,7 @@ const menuItems = [
         cuisine: "Indo-Chinese",
         section: "Chinese",
         price: 319,
-        image: "https://images.unsplash.com/photo-1604908176997-125f25cc500f?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800",
         info: "A spicy stir-fried chicken dish with peppers, garlic and soy glaze.",
     },
     {
@@ -179,7 +179,7 @@ const menuItems = [
         cuisine: "South Indian",
         section: "South Indian",
         price: 199,
-        image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=800",
         info: "Crispy dosa filled with spiced potato masala and served with chutneys.",
     },
     {
@@ -187,7 +187,7 @@ const menuItems = [
         cuisine: "South Indian",
         section: "South Indian",
         price: 179,
-        image: "https://images.unsplash.com/photo-1626132647523-66df1f3d2f6d?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800",
         info: "Soft steamed idlis served with sambar and coconut chutney.",
     },
     {
@@ -195,7 +195,7 @@ const menuItems = [
         cuisine: "South Indian",
         section: "South Indian",
         price: 189,
-        image: "https://images.unsplash.com/photo-1617622141664-bb564f22f8ae?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=800",
         info: "Thick rice pancake topped with onions, tomatoes and herbs.",
     },
     {
@@ -203,7 +203,7 @@ const menuItems = [
         cuisine: "Beverages",
         section: "Beverages",
         price: 129,
-        image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1f4f6?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800",
         info: "Chilled coffee blended with milk and a smooth frothy finish.",
     },
     {
@@ -211,7 +211,7 @@ const menuItems = [
         cuisine: "Beverages",
         section: "Beverages",
         price: 99,
-        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=800",
         info: "A refreshing citrus drink served sweet or salty.",
     },
     {
@@ -219,7 +219,7 @@ const menuItems = [
         cuisine: "Beverages",
         section: "Beverages",
         price: 139,
-        image: "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=800",
         info: "Creamy yogurt drink blended with ripe mango pulp.",
     },
     {
@@ -227,7 +227,7 @@ const menuItems = [
         cuisine: "Desserts",
         section: "Desserts",
         price: 129,
-        image: "https://images.unsplash.com/photo-1605197348512-6f52b4f0a0c4?auto=format&fit=crop&w=900&q=80",
+        image: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800",
         info: "Soft milk dumplings soaked in warm sugar syrup.",
     },
     {

@@ -45,6 +45,14 @@ const checkoutLimiter = rateLimit({
   message: { message: "Too many checkout or cart attempts, please try again later" }
 });
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isDevOrTest ? 100 : 10, // strict limit against login brute-forcing
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many login attempts, please try again after 15 minutes" }
+});
+
 // Middleware
 app.use(cors({ origin: true }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -54,6 +62,7 @@ app.use(globalLimiter);
 // Target rate limiting strictly to sensitive write endpoints
 app.post("/orders", checkoutLimiter);
 app.post("/cart", checkoutLimiter);
+app.post("/admin/login", loginLimiter);
 
 // Health Check
 app.get("/", (req, res) => {
@@ -72,7 +81,10 @@ app.use(errorHandler);
 // Start Server (local dev — on Vercel the exported app is used directly)
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   const port = PORT || 5000;
-  app.listen(port, () => console.log(`Server running on port ${port}`));
+  app.listen(port, () => {
+    console.log(`\n🚀 Server running on port ${port}`);
+    console.log(`🔗 Local API URL: http://localhost:${port}\n`);
+  });
 }
 
 // Graceful Shutdown

@@ -228,8 +228,13 @@ const Cart = () => {
                 >
                   <div className="w-full md:w-40 h-40">
                     <img
-                      src={item.image || "https://via.placeholder.com/300"}
+                      src={item.image || "/8575289.png"}
                       alt={item.name}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/8575289.png";
+                      }}
                       className="object-cover w-full h-full"
                     />
                   </div>
@@ -286,8 +291,10 @@ const Cart = () => {
                 <div className="relative">
                   <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
                   <input
-                    type="text"
+                    id="customer-name"
                     name="name"
+                    type="text"
+                    autoComplete="name"
                     placeholder="Your Name"
                     value={formData.name}
                     onChange={handleChange}
@@ -298,8 +305,10 @@ const Cart = () => {
                 <div className="relative">
                   <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
                   <input
-                    type="text"
+                    id="customer-contact"
                     name="contact"
+                    type="tel"
+                    autoComplete="tel"
                     placeholder="Contact Number"
                     value={formData.contact}
                     onChange={handleChange}
@@ -310,7 +319,9 @@ const Cart = () => {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3.5 text-gray-400" size={18} />
                   <textarea
+                    id="customer-address"
                     name="address"
+                    autoComplete="street-address"
                     placeholder="Delivery Address / Table No."
                     value={formData.address}
                     onChange={handleChange}

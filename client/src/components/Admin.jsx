@@ -340,8 +340,10 @@ const Admin = () => {
                   <div className="relative">
                     <UtensilsCrossed className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
+                      id="dish-name"
                       type="text"
                       name="name"
+                      autoComplete="off"
                       placeholder="Dish Name"
                       value={menuData.name}
                       onChange={handleChange}
@@ -350,16 +352,20 @@ const Admin = () => {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <input
+                      id="dish-cuisine"
                       type="text"
                       name="cuisine"
+                      autoComplete="off"
                       placeholder="Cuisine"
                       value={menuData.cuisine}
                       onChange={handleChange}
                       className="flex-1 w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white text-gray-800"
                     />
                     <input
+                      id="dish-section"
                       type="text"
                       name="section"
+                      autoComplete="off"
                       placeholder="Section"
                       value={menuData.section}
                       onChange={handleChange}
@@ -369,9 +375,11 @@ const Admin = () => {
                   <div className="relative">
                     <IndianRupee className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
+                      id="dish-price"
                       type="number"
                       step="any"
                       name="price"
+                      autoComplete="off"
                       placeholder="Price (INR)"
                       value={menuData.price}
                       onChange={handleChange}
@@ -381,8 +389,10 @@ const Admin = () => {
                   <div className="relative">
                     <ImageIcon className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
+                      id="dish-image"
                       type="text"
                       name="image"
+                      autoComplete="off"
                       placeholder="Image URL"
                       value={menuData.image}
                       onChange={handleChange}
@@ -390,7 +400,9 @@ const Admin = () => {
                     />
                   </div>
                   <textarea
+                    id="dish-info"
                     name="info"
+                    autoComplete="off"
                     placeholder="Short Description"
                     value={menuData.info}
                     onChange={handleChange}
@@ -401,6 +413,7 @@ const Admin = () => {
                       type="checkbox"
                       name="available"
                       id="avail-checkbox"
+                      autoComplete="off"
                       checked={menuData.available !== false}
                       onChange={(e) => setMenuData({ ...menuData, available: e.target.checked })}
                       className="w-4.5 h-4.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
@@ -435,12 +448,15 @@ const Admin = () => {
               </h3>
               <form onSubmit={handleSaveSettings} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">GST Rate (%)</label>
+                  <label htmlFor="gst-rate" className="text-xs font-bold text-gray-400 uppercase ml-1">GST Rate (%)</label>
                   <div className="relative">
                     <Percent className="absolute left-3 top-3.5 text-gray-400" size={18} />
                     <input
+                      id="gst-rate"
+                      name="gstRate"
                       type="number"
                       step="any"
+                      autoComplete="off"
                       placeholder="e.g. 5"
                       value={gstRateInput}
                       onChange={(e) => setGstRateInput(e.target.value)}
@@ -469,7 +485,10 @@ const Admin = () => {
             <div className="relative grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
+                id="admin-search-menu"
+                name="adminSearch"
                 type="text"
+                autoComplete="off"
                 placeholder="Search menu..."
                 value={searchTerm}
                 onChange={handleSearch}
@@ -479,6 +498,9 @@ const Admin = () => {
             <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
               <Filter className="text-gray-400" size={18} />
               <select
+                id="admin-select-section"
+                name="adminSection"
+                autoComplete="off"
                 value={selectedSection}
                 onChange={handleSectionChange}
                 className="bg-transparent border-none focus:ring-0 focus:outline-none font-semibold text-gray-600 capitalize cursor-pointer"
@@ -529,8 +551,13 @@ const Admin = () => {
                               <div className="absolute inset-0 bg-red-600/10 z-10" />
                             )}
                             <img
-                              src={item.image || "https://via.placeholder.com/300"}
+                              src={item.image || "/8575289.png"}
                               alt={item.name}
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "/8575289.png";
+                              }}
                               className="object-cover h-full w-full"
                             />
                           </div>
@@ -553,6 +580,8 @@ const Admin = () => {
                                 <input
                                   type="checkbox"
                                   id={`avail-${item._id}`}
+                                  name={`avail-${item._id}`}
+                                  autoComplete="off"
                                   checked={item.available !== false}
                                   onChange={() => handleToggleAvailability(item)}
                                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"

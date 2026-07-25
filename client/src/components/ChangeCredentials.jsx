@@ -64,11 +64,14 @@ const ChangeCredentials = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Previous Admin</label>
+              <label htmlFor="prev-username" className="text-xs font-bold text-gray-400 uppercase ml-1">Previous Admin</label>
               <div className="relative">
                 <User className="absolute left-3 top-3.5 text-gray-300" size={18} />
                 <input
+                  id="prev-username"
+                  name="prevUsername"
                   type="text"
+                  autoComplete="username"
                   placeholder="Old Username"
                   value={prevUsername}
                   onChange={(e) => setPrevUsername(e.target.value)}
@@ -77,11 +80,14 @@ const ChangeCredentials = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Current Secret</label>
+              <label htmlFor="prev-password" className="text-xs font-bold text-gray-400 uppercase ml-1">Current Secret</label>
               <div className="relative">
                 <Key className="absolute left-3 top-3.5 text-gray-300" size={18} />
                 <input
+                  id="prev-password"
+                  name="prevPassword"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="Old Password"
                   value={prevPassword}
                   onChange={(e) => setPrevPassword(e.target.value)}
@@ -95,11 +101,14 @@ const ChangeCredentials = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-blue-600 uppercase ml-1">New Identity</label>
+              <label htmlFor="new-username" className="text-xs font-bold text-blue-600 uppercase ml-1">New Identity</label>
               <div className="relative">
                 <User className="absolute left-3 top-3.5 text-blue-200" size={18} />
                 <input
+                  id="new-username"
+                  name="newUsername"
                   type="text"
+                  autoComplete="username"
                   placeholder="New Username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
@@ -108,11 +117,14 @@ const ChangeCredentials = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-blue-600 uppercase ml-1">New Secret</label>
+              <label htmlFor="new-password" className="text-xs font-bold text-blue-600 uppercase ml-1">New Secret</label>
               <div className="relative">
                 <Key className="absolute left-3 top-3.5 text-blue-200" size={18} />
                 <input
+                  id="new-password"
+                  name="newPassword"
                   type="password"
+                  autoComplete="new-password"
                   placeholder="New Password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}

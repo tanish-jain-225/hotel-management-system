@@ -86,11 +86,25 @@ const AllOrders = () => {
     fetchOrders(false, showHistory ? "Completed" : undefined);
 
     if (!showHistory) {
-      // Auto-poll active orders every 10 seconds for real-time kitchen feed
+      // Auto-poll active orders every 10 seconds for real-time kitchen feed (paused when tab is hidden)
       const interval = setInterval(() => {
-        fetchOrders(true, undefined);
+        if (!document.hidden) {
+          fetchOrders(true, undefined);
+        }
       }, 10000);
-      return () => clearInterval(interval);
+
+      const handleVisibility = () => {
+        if (!document.hidden) {
+          fetchOrders(true, undefined);
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibility);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener("visibilitychange", handleVisibility);
+      };
     }
   }, [showHistory]);
 

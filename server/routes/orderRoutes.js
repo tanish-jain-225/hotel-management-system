@@ -10,8 +10,17 @@ router.post("/", async (req, res, next) => {
   try {
     const { sessionId, name, contact, address, paymentMethod, items } = req.body;
 
-    if (!sessionId || !name || !contact || !address || !paymentMethod || !items?.length) {
+    const trimmedName = String(name || "").trim();
+    const trimmedContact = String(contact || "").trim();
+    const trimmedAddress = String(address || "").trim();
+
+    if (!sessionId || !trimmedName || !trimmedContact || !trimmedAddress || !paymentMethod || !items?.length) {
       return res.status(400).json({ message: "All order fields are required" });
+    }
+
+    const cleanContact = trimmedContact.replace(/[\s\-\(\)\+]/g, "");
+    if (cleanContact.length < 7) {
+      return res.status(400).json({ message: "Please provide a valid contact number (at least 7 digits)." });
     }
 
     const menuCol = await getCollection(COLLECTIONS.menuItems);
@@ -68,7 +77,7 @@ router.post("/", async (req, res, next) => {
     const orderData = {
       serialNumber,
       sessionId,
-      customer: { name, contact, address },
+      customer: { name: trimmedName, contact: trimmedContact, address: trimmedAddress },
       items: verifiedItems,
       paymentMethod,
       subtotal: parseFloat(calculatedSubtotal.toFixed(2)),
@@ -81,6 +90,14 @@ router.post("/", async (req, res, next) => {
     const customerOrders = await getCollection(COLLECTIONS.customerOrders);
     const result = await customerOrders.insertOne(orderData);
     if (!result.acknowledged) throw new Error("Failed to place order");
+
+    // Automatically clear cart for this session on the server
+    try {
+      const cartCol = await getCollection(COLLECTIONS.cartItems);
+      await cartCol.deleteMany({ sessionId });
+    } catch (clearErr) {
+      console.error("Non-critical error clearing cart after order placement:", clearErr);
+    }
 
     res.status(201).json({ 
       message: "Order placed successfully", 

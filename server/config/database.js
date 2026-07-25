@@ -81,13 +81,18 @@ export async function connectToDatabase() {
         await seedAdminCredentials(db);
         await migrateAdminCredentials(db);
 
-        // Ensure TTL index on cartItems collection
+        // Ensure indexes on cartItems and customerOrders collections
         try {
           const cartCol = db.collection(COLLECTIONS.cartItems);
           await cartCol.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
-          console.log(`Ensured TTL index on ${COLLECTIONS.cartItems} collection`);
+          await cartCol.createIndex({ sessionId: 1 });
+          console.log(`Ensured indexes on ${COLLECTIONS.cartItems} collection`);
+
+          const ordersCol = db.collection(COLLECTIONS.customerOrders);
+          await ordersCol.createIndex({ sessionId: 1, status: 1, orderDate: -1 });
+          console.log(`Ensured indexes on ${COLLECTIONS.customerOrders} collection`);
         } catch (idxError) {
-          console.error(`Error creating TTL index on ${COLLECTIONS.cartItems}:`, idxError);
+          console.error("Error creating collection indexes:", idxError);
         }
 
         return db;
