@@ -22,7 +22,8 @@ const MyOrders = () => {
     if (showToast) setRefreshing(true);
     try {
       const data = await orderApi.getAll(sessionId);
-      const sorted = data.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+      const list = Array.isArray(data) ? data : [];
+      const sorted = list.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
       setOrders(sorted);
       if (showToast) toast.success("Order status updated!");
     } catch (err) {

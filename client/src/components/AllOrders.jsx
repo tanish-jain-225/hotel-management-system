@@ -50,7 +50,8 @@ const AllOrders = () => {
   const fetchOrders = async (silent = false, statusFilter = showHistory ? "Completed" : undefined) => {
     try {
       const data = await orderApi.getAll(null, statusFilter);
-      const sorted = data.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+      const list = Array.isArray(data) ? data : [];
+      const sorted = list.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
       
       // Only check for new orders and trigger chime if we are NOT viewing history
       if (!statusFilter) {

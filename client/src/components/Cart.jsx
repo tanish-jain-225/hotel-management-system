@@ -22,9 +22,10 @@ const Cart = () => {
   const fetchCartItems = useCallback(async () => {
     try {
       const data = await cartApi.getItems(sessionId);
-      setCartItems(data);
+      setCartItems(Array.isArray(data) ? data : []);
     } catch {
       toast.error("Failed to load cart items");
+      setCartItems([]);
     } finally {
       setLoading(false);
     }

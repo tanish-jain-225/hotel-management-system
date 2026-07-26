@@ -87,9 +87,10 @@ const Menu = () => {
     const fetchMenu = async () => {
       try {
         const data = await menuApi.getAll();
-        setMenuItems(data);
+        setMenuItems(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
+        setMenuItems([]);
       } finally {
         setLoading(false);
       }
@@ -99,8 +100,10 @@ const Menu = () => {
   }, [fetchCartCount]);
 
   const sections = useMemo(() => {
+    const items = Array.isArray(menuItems) ? menuItems : [];
     const unique = {};
-    menuItems.forEach((item) => {
+    items.forEach((item) => {
+      if (!item?.section) return;
       const normalized = item.section.trim().toLowerCase();
       if (!unique[normalized]) unique[normalized] = item.section.trim();
     });
@@ -108,17 +111,20 @@ const Menu = () => {
   }, [menuItems]);
 
   const filteredItems = useMemo(() => {
-    return menuItems.filter(
+    const items = Array.isArray(menuItems) ? menuItems : [];
+    return items.filter(
       (item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        item?.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
         (selectedSection === "All" ||
-          item.section.trim().toLowerCase() === selectedSection.toLowerCase())
+          item?.section?.trim().toLowerCase() === selectedSection.toLowerCase())
     );
   }, [menuItems, searchTerm, selectedSection]);
 
   const groupedItems = useMemo(() => {
     const grouped = {};
-    filteredItems.forEach((item) => {
+    const items = Array.isArray(filteredItems) ? filteredItems : [];
+    items.forEach((item) => {
+      if (!item?.section) return;
       const section = item.section.trim();
       if (!grouped[section]) grouped[section] = [];
       grouped[section].push(item);

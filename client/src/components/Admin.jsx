@@ -47,8 +47,9 @@ const Admin = () => {
     setLoading(true);
     try {
       const data = await menuApi.getAll();
-      setMenuItems(data);
-      setFilteredItems(data);
+      const items = Array.isArray(data) ? data : [];
+      setMenuItems(items);
+      setFilteredItems(items);
     } catch {
       toast.error("Error fetching menu items.");
     } finally {
