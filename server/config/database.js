@@ -1,7 +1,6 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 
-const MONGO_URI = process.env.MONGO_URI;
 export const DB_NAME = "hotelMenu";
 export const COLLECTIONS = {
   adminCredentials: "adminCredentials",
@@ -16,6 +15,20 @@ export const COLLECTIONS = {
 let client;
 let db;
 let connectionPromise;
+let isInitialized = false;
+
+async function ensureIndexes(database) {
+  try {
+    const cartCol = database.collection(COLLECTIONS.cartItems);
+    await cartCol.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+    await cartCol.createIndex({ sessionId: 1 });
+
+    const ordersCol = database.collection(COLLECTIONS.customerOrders);
+    await ordersCol.createIndex({ sessionId: 1, status: 1, orderDate: -1 });
+  } catch (idxError) {
+    console.error("Error creating collection indexes:", idxError);
+  }
+}
 
 // Helper function to seed initial admin credentials securely
 async function seedAdminCredentials(database) {
@@ -69,7 +82,12 @@ export async function connectToDatabase() {
   if (!connectionPromise) {
     connectionPromise = (async () => {
       try {
-        client = new MongoClient(MONGO_URI, {
+        const mongoUri = process.env.MONGO_URI;
+        if (!mongoUri) {
+          throw new Error("MONGO_URI environment variable is not defined.");
+        }
+
+        client = new MongoClient(mongoUri, {
           connectTimeoutMS: 10000,
           serverSelectionTimeoutMS: 10000
         });
@@ -77,22 +95,13 @@ export async function connectToDatabase() {
         db = client.db(DB_NAME);
         console.log("Connected to MongoDB");
 
-        // Seed and migrate admin credentials
-        await seedAdminCredentials(db);
-        await migrateAdminCredentials(db);
-
-        // Ensure indexes on cartItems and customerOrders collections
-        try {
-          const cartCol = db.collection(COLLECTIONS.cartItems);
-          await cartCol.createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 });
-          await cartCol.createIndex({ sessionId: 1 });
-          console.log(`Ensured indexes on ${COLLECTIONS.cartItems} collection`);
-
-          const ordersCol = db.collection(COLLECTIONS.customerOrders);
-          await ordersCol.createIndex({ sessionId: 1, status: 1, orderDate: -1 });
-          console.log(`Ensured indexes on ${COLLECTIONS.customerOrders} collection`);
-        } catch (idxError) {
-          console.error("Error creating collection indexes:", idxError);
+        if (!isInitialized) {
+          isInitialized = true;
+          Promise.allSettled([
+            seedAdminCredentials(db),
+            migrateAdminCredentials(db),
+            ensureIndexes(db)
+          ]).catch(err => console.error("Database setup task error:", err));
         }
 
         return db;
@@ -118,6 +127,8 @@ export async function closeConnection() {
     client = null;
     db = null;
     connectionPromise = null;
+    isInitialized = false;
     console.log("MongoDB connection closed");
   }
 }
+

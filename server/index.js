@@ -18,22 +18,25 @@ app.set("trust proxy", 1);
 
 // Environment validation
 if (!process.env.MONGO_URI) {
-  console.error("FATAL ERROR: MONGO_URI is not defined in the environment.");
-  process.exit(1);
+  console.error("WARNING: MONGO_URI is not defined in environment variables.");
+  if (!process.env.VERCEL && process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+    process.exit(1);
+  }
 }
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.error("FATAL ERROR: JWT_SECRET is not defined in production mode.");
-  process.exit(1);
+  console.warn("WARNING: JWT_SECRET is not defined in production mode.");
 }
 
 // Rate Limiting (Relaxed in non-production environments to support testing and active local development)
 const isDevOrTest = process.env.NODE_ENV !== "production" || process.env.VITEST;
+const skipPreflight = (req) => req.method === "OPTIONS";
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: isDevOrTest ? 10000 : 1000, // accommodate active client/admin polling
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipPreflight,
   message: { message: "Too many requests, please try again later" }
 });
 
@@ -42,6 +45,7 @@ const checkoutLimiter = rateLimit({
   max: isDevOrTest ? 1000 : 30, // limit order placement spam
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipPreflight,
   message: { message: "Too many checkout or cart attempts, please try again later" }
 });
 
@@ -50,11 +54,12 @@ const loginLimiter = rateLimit({
   max: isDevOrTest ? 100 : 10, // strict limit against login brute-forcing
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipPreflight,
   message: { message: "Too many login attempts, please try again after 15 minutes" }
 });
 
 // Middleware
-app.use(cors({ origin: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 app.use(globalLimiter);
