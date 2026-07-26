@@ -139,11 +139,17 @@ beforeEach(() => {
 
 describe("DineEase API Integration Tests", () => {
   
-  describe("Health Check", () => {
-    it("should return a healthy status", async () => {
-      const res = await request(app).get("/");
-      expect(res.status).toBe(200);
-      expect(res.body.status).toBe("Server is healthy");
+  describe("CORS Preflight", () => {
+    it("should respond with appropriate CORS headers to preflight OPTIONS requests", async () => {
+      const res = await request(app)
+        .options("/menu")
+        .set("Origin", "https://hotel-management-system-web.vercel.app")
+        .set("Access-Control-Request-Method", "GET")
+        .set("Access-Control-Request-Headers", "Authorization, Content-Type");
+
+      expect([200, 204]).toContain(res.status);
+      expect(res.headers["access-control-allow-origin"]).toBe("https://hotel-management-system-web.vercel.app");
+      expect(res.headers["access-control-allow-credentials"]).toBe("true");
     });
   });
 
