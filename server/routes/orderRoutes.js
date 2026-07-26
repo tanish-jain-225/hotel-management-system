@@ -138,20 +138,24 @@ router.get("/", async (req, res, next) => {
     }
 
     // Otherwise, fetch orders for specific session (customer)
-    // Only return active orders, or completed orders from the last 24 hours
-    const query = {
-      sessionId,
-      $or: [
-        { status: { $ne: "Completed" } },
-        {
-          status: "Completed",
-          $or: [
-            { completedAt: { $gte: twentyFourHoursAgo } },
-            { completedAt: { $exists: false }, orderDate: { $gte: twentyFourHoursAgo } }
-          ]
-        }
-      ]
-    };
+    const { status } = req.query;
+    let query;
+
+    if (status === "Completed") {
+      // History view: only completed orders from the last 24 hours
+      query = {
+        sessionId,
+        status: "Completed",
+        $or: [
+          { completedAt: { $gte: twentyFourHoursAgo } },
+          { completedAt: { $exists: false }, orderDate: { $gte: twentyFourHoursAgo } }
+        ]
+      };
+    } else {
+      // Active view (default): only non-completed orders
+      query = { sessionId, status: { $ne: "Completed" } };
+    }
+
     const orders = await (await getCollection(COLLECTIONS.customerOrders)).find(query).sort({ orderDate: -1 }).toArray();
     res.json(orders);
   } catch (error) {

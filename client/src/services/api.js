@@ -64,7 +64,6 @@ export const orderApi = {
     const query = params.length ? `?${params.join("&")}` : "";
     return request(`/orders${query}`);
   },
-  complete: (id) => request(`/orders/${id}`, { method: "DELETE" }),
   updateStatus: (id, status) => request(`/orders/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
