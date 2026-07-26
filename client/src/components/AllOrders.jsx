@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { orderApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +47,7 @@ const AllOrders = () => {
   const knownOrderIds = useRef(new Set());
   const isInitialLoad = useRef(true);
 
-  const fetchOrders = async (silent = false, statusFilter = showHistory ? "Completed" : undefined) => {
+  const fetchOrders = useCallback(async (silent = false, statusFilter = showHistory ? "Completed" : undefined) => {
     try {
       const data = await orderApi.getAll(null, statusFilter);
       const list = Array.isArray(data) ? data : [];
@@ -80,9 +80,11 @@ const AllOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showHistory]);
 
   useEffect(() => {
+    // Reset initial load tracking when switching between active/history views
+    isInitialLoad.current = true;
     setLoading(true);
     fetchOrders(false, showHistory ? "Completed" : undefined);
 
@@ -107,7 +109,7 @@ const AllOrders = () => {
         document.removeEventListener("visibilitychange", handleVisibility);
       };
     }
-  }, [showHistory]);
+  }, [showHistory, fetchOrders]);
 
   useEffect(() => {
     if (printingOrder) {

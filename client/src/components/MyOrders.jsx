@@ -21,7 +21,9 @@ const MyOrders = () => {
   const fetchOrders = useCallback(async (showToast = false) => {
     if (showToast) setRefreshing(true);
     try {
-      const data = await orderApi.getAll(sessionId);
+      // Pass status filter to API — avoids fetching all and filtering client-side
+      const statusFilter = showHistory ? "Completed" : undefined;
+      const data = await orderApi.getAll(sessionId, statusFilter);
       const list = Array.isArray(data) ? data : [];
       const sorted = list.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
       setOrders(sorted);
@@ -32,9 +34,10 @@ const MyOrders = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [sessionId]);
+  }, [sessionId, showHistory]);
 
   useEffect(() => {
+    setLoading(true);
     fetchOrders();
 
     if (!showHistory) {
@@ -93,9 +96,8 @@ const MyOrders = () => {
     );
   }
 
-  const filteredOrders = orders.filter((order) => {
-    return showHistory ? order.status === "Completed" : order.status !== "Completed";
-  });
+  // Orders are already filtered server-side via status query param in fetchOrders
+  const filteredOrders = orders;
 
   return (
     <motion.div 

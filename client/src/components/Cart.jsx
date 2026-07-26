@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cartApi, orderApi, settingsApi } from "../services/api";
 import { getSessionId } from "../utils/session";
@@ -79,7 +79,10 @@ const Cart = () => {
   const handleRemoveAll = async (group) => {
     try {
       if (!group.ids || group.ids.length === 0) return;
-      await cartApi.removeItem(group.ids[0], sessionId);
+      // Delete all document IDs for this grouped item sequentially
+      for (const id of group.ids) {
+        await cartApi.removeItem(id, sessionId);
+      }
       toast.success(`${group.name} removed`);
       await fetchCartItems();
     } catch (err) {
@@ -89,7 +92,7 @@ const Cart = () => {
   };
 
   // Group raw cart items by name and keep list of document ids for each grouped item
-  const groupedOrders = (() => {
+  const groupedOrders = useMemo(() => {
     const map = {};
     for (const item of cartItems) {
       if (!map[item.name]) {
@@ -111,7 +114,7 @@ const Cart = () => {
       entry.ids.push(item._id);
     }
     return Object.values(map);
-  })();
+  }, [cartItems]);
 
   const totalItems = groupedOrders.reduce((sum, item) => sum + item.quantity, 0);
 

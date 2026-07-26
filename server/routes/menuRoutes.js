@@ -20,7 +20,7 @@ router.post("/", authMiddleware, async (req, res, next) => {
   try {
     const { name, cuisine, section, price, image, info, available } = req.body;
 
-    if (!name || !cuisine || !section || !price || !image || !info) {
+    if (!name || !cuisine || !section || !price || !image || info === undefined || info === null) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -69,7 +69,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid menu item ID" });
     }
 
-    if (!name || !cuisine || !section || !price || !image || !info) {
+    if (!name || !cuisine || !section || !price || !image || info === undefined || info === null) {
       return res.status(400).json({ message: "All fields are required" });
     }
 

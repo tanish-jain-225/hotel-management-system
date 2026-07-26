@@ -154,6 +154,22 @@ const Admin = () => {
         setFilteredItems((prev) => prev.map((item) => (item._id === editingId ? updated : item)));
         setEditingId(null);
       } else {
+        // Check for duplicate name before adding
+        try {
+          const { exists } = await menuApi.checkExists(cleaned.name);
+          if (exists) {
+            const proceed = window.confirm(
+              `A menu item named "${cleaned.name}" already exists. Add another one anyway?`
+            );
+            if (!proceed) {
+              toast.dismiss(loadToast);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {
+          // Non-critical — proceed if check fails
+        }
         const data = await menuApi.add(cleaned);
         toast.success("Menu item added successfully!", { id: loadToast });
         const newItem = data.newItem;
